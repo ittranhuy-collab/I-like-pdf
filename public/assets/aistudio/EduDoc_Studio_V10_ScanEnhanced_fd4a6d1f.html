@@ -1,0 +1,3235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduDoc Studio Trần Huy V03 - Bộ Công Cụ Xử Lý PDF & Thiết kế: Trần Huy</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome Icons 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <!-- docx-preview CDN -->
+  <script src="https://unpkg.com/docx-preview@0.3.2/dist/docx-preview.js"></script>
+
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- SortableJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+  <!-- JSZip CDN chính & dự phòng -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            edu: {
+              teal: '#08665B',
+              text: '#075A52',
+              green: '#20A653',
+              yellow: '#F9DF68',
+              cream: '#FFF3D2',
+              coral: '#F57A5B',
+              red: '#E94B4B',
+              surface: '#FFFFFF',
+              tint: '#F1F9F6'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          boxShadow: {
+            'edu-sm': '0 2px 8px rgba(8, 102, 91, 0.08)',
+            'edu-md': '0 8px 24px rgba(8, 102, 91, 0.12)',
+            'edu-lg': '0 16px 36px rgba(8, 102, 91, 0.16)',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #FFF3D2; }
+    ::-webkit-scrollbar-thumb { background: #20A653; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #08665B; }
+
+    .sortable-ghost {
+      opacity: 0.35;
+      transform: scale(0.96);
+      border: 2px dashed #20A653 !important;
+    }
+    .sortable-chosen {
+      box-shadow: 0 12px 28px rgba(8, 102, 91, 0.25);
+      z-index: 20;
+    }
+    .sortable-drag {
+      cursor: grabbing !important;
+      opacity: 0.95;
+      transform: scale(1.03) rotate(1deg);
+      box-shadow: 0 16px 36px rgba(8, 102, 91, 0.28);
+    }
+    #merge-pages-grid > div {
+      touch-action: none;
+    }
+
+    .rot-0 { transform: rotate(0deg); }
+    .rot-90 { transform: rotate(90deg); }
+    .rot-180 { transform: rotate(180deg); }
+    .rot-270 { transform: rotate(270deg); }
+
+    #docx-render-stage {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 860px;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #docx-render-stage .docx-wrapper { background: transparent !important; padding: 0 !important; }
+    #docx-render-stage section.docx { margin-bottom: 24px !important; box-shadow: none !important; background: #ffffff !important; }
+
+    .nav-tab-btn.active {
+      background: #F9DF68;
+      color: #075A52;
+      font-weight: 800;
+      box-shadow: 0 4px 14px rgba(249, 223, 104, 0.45);
+      border-color: #20A653;
+    }
+  </style>
+</head>
+<body class="bg-[#FFF3D2]/40 text-edu-text min-h-screen flex flex-col font-sans selection:bg-edu-yellow selection:text-edu-teal">
+
+  <header class="bg-edu-teal border-b-4 border-edu-green sticky top-0 z-40 shadow-edu-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-auto min-h-[5rem] py-2.5 flex items-center justify-between gap-3">
+      
+      <!-- Brand & Logo -->
+      <div class="flex items-center gap-3.5 min-w-0">
+        <div class="w-12 h-12 rounded-2xl bg-edu-yellow text-edu-teal flex items-center justify-center text-2xl font-black shadow-inner border-2 border-edu-green transform -rotate-3 hover:rotate-0 transition-transform shrink-0">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="font-extrabold text-xl sm:text-2xl text-white tracking-tight leading-none">EduDoc Studio</h1>
+            <!-- Logo Bipbee (thay cho Học Đường 4.0) -->
+            <span class="inline-flex items-center gap-1 bg-white text-edu-teal text-[11px] font-black uppercase tracking-wide px-2.5 py-0.5 rounded-full border-2 border-edu-yellow shadow-sm select-none" title="Bipbee">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0">
+                <circle cx="12" cy="12" r="10" fill="#F9DF68" stroke="#08665B" stroke-width="1.5"/>
+                <path d="M8 13c1.2 2 2.8 3 4 3s2.8-1 4-3" stroke="#08665B" stroke-width="1.6" stroke-linecap="round"/>
+                <circle cx="9" cy="10" r="1.2" fill="#08665B"/>
+                <circle cx="15" cy="10" r="1.2" fill="#08665B"/>
+              </svg>
+              Bipbee
+            </span>
+          </div>
+          <p class="text-xs text-edu-yellow font-medium mt-1 truncate" data-i18n="header.subtitle">Trợ Lý Xử Lý PDF & Văn Bản Chuẩn Xác · WinRAR Tương Thích 100%</p>
+          <p class="text-[10px] text-white/70 font-semibold mt-0.5 tracking-wide">Design by Trần Huy</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <!-- Language switcher -->
+        <div class="flex items-center rounded-2xl border-2 border-white/25 bg-white/10 p-0.5 text-[11px] sm:text-xs font-bold overflow-hidden">
+          <button type="button" id="lang-btn-vi" class="lang-btn px-2.5 py-1.5 rounded-xl transition bg-edu-yellow text-edu-teal shadow-sm" data-lang="vi">VI</button>
+          <button type="button" id="lang-btn-en" class="lang-btn px-2.5 py-1.5 rounded-xl transition text-white/90 hover:bg-white/10" data-lang="en">EN</button>
+        </div>
+
+        <div class="hidden md:flex items-center gap-2.5 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-2xl border border-white/20">
+          <span class="w-2.5 h-2.5 rounded-full bg-edu-yellow animate-ping"></span>
+          <span class="text-xs font-semibold text-white" data-i18n="header.status">Chế độ xử lý an toàn &amp; Tỷ lệ 1:1 sẵn sàng</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-3 pt-1">
+      <nav class="flex items-center gap-2 sm:gap-3 overflow-x-auto py-1 text-xs sm:text-sm font-semibold">
+        <button id="nav-btn-convert" class="nav-tab-btn active px-4 sm:px-5 py-2.5 rounded-2xl border-2 border-transparent text-white/90 hover:bg-white/10 flex items-center gap-2 transition-all whitespace-nowrap">
+          <i class="fa-solid fa-photo-film text-base"></i>
+          <span data-i18n="nav.convert">1. Chuyển Word/PDF → Ảnh</span>
+        </button>
+        <button id="nav-btn-merge" class="nav-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl border-2 border-transparent text-white/90 hover:bg-white/10 flex items-center gap-2 transition-all whitespace-nowrap">
+          <i class="fa-solid fa-object-ungroup text-base"></i>
+          <span data-i18n="nav.merge">2. Ghép Nối PDF &amp; Ảnh</span>
+        </button>
+        <button id="nav-btn-compress" class="nav-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl border-2 border-transparent text-white/90 hover:bg-white/10 flex items-center gap-2 transition-all whitespace-nowrap">
+          <i class="fa-solid fa-compress text-base"></i>
+          <span data-i18n="nav.compress">3. Nén File PDF</span>
+        </button>
+        <button id="nav-btn-split" class="nav-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl border-2 border-transparent text-white/90 hover:bg-white/10 flex items-center gap-2 transition-all whitespace-nowrap">
+          <i class="fa-solid fa-scissors text-base"></i>
+          <span data-i18n="nav.split">4. Tách File PDF Đa Năng</span>
+        </button>
+        <button id="nav-btn-watermark" class="nav-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl border-2 border-transparent text-white/90 hover:bg-white/10 flex items-center gap-2 transition-all whitespace-nowrap">
+          <i class="fa-solid fa-stamp text-base"></i>
+          <span data-i18n="nav.watermark">5. Đóng Dấu Watermark</span>
+        </button>
+        <button id="nav-btn-scan" class="nav-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl border-2 border-transparent text-white/90 hover:bg-white/10 flex items-center gap-2 transition-all whitespace-nowrap">
+          <i class="fa-solid fa-camera text-base"></i>
+          <span data-i18n="nav.scan">6. Scan Camera → PDF</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Global Progress Bar Card -->
+    <div id="global-progress-card" class="hidden bg-white rounded-3xl border-2 border-edu-green shadow-edu-md p-6 animate-in fade-in zoom-in-95 duration-200">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-edu-cream text-edu-teal flex items-center justify-center text-lg animate-spin border border-edu-yellow">
+            <i class="fa-solid fa-gear"></i>
+          </div>
+          <div>
+            <h3 id="progress-title" class="font-bold text-edu-text text-sm sm:text-base">Đang tải và chuẩn bị tài liệu...</h3>
+            <p id="progress-desc" class="text-xs text-edu-teal/70 font-medium">Hệ thống xử lý trực tiếp tại máy tính của bạn</p>
+          </div>
+        </div>
+        <span id="progress-percent" class="text-base sm:text-lg font-black text-edu-teal bg-edu-yellow px-3 py-1 rounded-xl border border-edu-green/40">0%</span>
+      </div>
+      <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden p-0.5 border border-slate-200">
+        <div id="progress-bar-fill" class="bg-gradient-to-r from-edu-teal via-edu-green to-edu-yellow h-full rounded-full transition-all duration-300 w-0"></div>
+      </div>
+    </div>
+
+    <!-- MODULE 1: CONVERT WORD/PDF -> IMAGES -->
+    <section id="module-convert" class="space-y-6">
+      <div id="convert-upload-card" class="bg-white rounded-3xl border-2 border-dashed border-edu-green/60 hover:border-edu-green bg-gradient-to-b from-white to-edu-cream/20 shadow-edu-sm p-8 sm:p-12 transition-all group cursor-pointer text-center">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-edu-tint group-hover:bg-edu-yellow text-edu-teal flex items-center justify-center text-3xl transition-all duration-300 shadow-inner group-hover:scale-105 border-2 border-edu-green/30">
+          <i class="fa-solid fa-file-image"></i>
+        </div>
+        <h2 class="mt-4 text-xl sm:text-2xl font-black text-edu-teal tracking-tight" data-i18n="convert.title">Kéo thả file Word (.docx) hoặc PDF vào đây</h2>
+        <p class="mt-1 text-xs sm:text-sm text-edu-text/80 max-w-lg mx-auto" data-i18n="convert.desc">
+          Tự động kết xuất từng trang thành hình ảnh sắc nét. Tùy chọn DPI, xem trước và tải trọn gói file ZIP không bao giờ bị lỗi giải nén trên WinRAR/Windows.
+        </p>
+
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm" onclick="event.stopPropagation()">
+          <div class="flex items-center gap-2 bg-edu-cream/80 px-3.5 py-2 rounded-2xl border border-edu-yellow font-semibold">
+            <span class="text-edu-teal"><i class="fa-solid fa-sliders mr-1 text-edu-green"></i><span data-i18n="convert.format">Định dạng:</span></span>
+            <select id="convert-format" class="bg-white text-edu-teal font-bold px-2 py-1 rounded-xl border border-edu-green/40 focus:outline-none">
+              <option value="image/png" data-i18n="convert.opt.png">PNG (Chuẩn nét nhất)</option>
+              <option value="image/jpeg" data-i18n="convert.opt.jpeg">JPEG (Dung lượng nhẹ)</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2 bg-edu-cream/80 px-3.5 py-2 rounded-2xl border border-edu-yellow font-semibold">
+            <span class="text-edu-teal"><i class="fa-solid fa-expand mr-1 text-edu-green"></i><span data-i18n="convert.dpi">Độ sắc nét (DPI):</span></span>
+            <select id="convert-scale" class="bg-white text-edu-teal font-bold px-2 py-1 rounded-xl border border-edu-green/40 focus:outline-none">
+              <option value="1.5" data-i18n="convert.opt.1.5">Chuẩn 1.5x (Màn hình)</option>
+              <option value="2.0" selected data-i18n="convert.opt.2.0">Sắc nét cao 2.0x (Khuyên dùng)</option>
+              <option value="2.5" data-i18n="convert.opt.2.5">Siêu sắc nét 2.5x (In ấn)</option>
+            </select>
+          </div>
+
+          <button id="convert-browse-btn" class="px-5 py-2 rounded-2xl bg-edu-teal hover:bg-edu-text text-white font-bold shadow-edu-sm transition active:scale-95 flex items-center gap-2">
+            <i class="fa-solid fa-folder-open text-edu-yellow"></i>
+            <span data-i18n="convert.browse">Chọn tệp tin</span>
+          </button>
+          <input type="file" id="convert-file-input" class="hidden" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+        </div>
+      </div>
+
+      <div id="convert-results-card" class="hidden space-y-5">
+        <div class="bg-white rounded-3xl border-2 border-edu-green p-4 sm:p-5 shadow-edu-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <div class="w-12 h-12 rounded-2xl bg-edu-cream text-edu-teal flex items-center justify-center text-xl font-black border border-edu-yellow shrink-0">
+              <i class="fa-solid fa-book-open"></i>
+            </div>
+            <div class="truncate">
+              <h3 id="convert-doc-name" class="font-bold text-edu-teal text-base truncate max-w-sm">Tài liệu.docx</h3>
+              <p id="convert-doc-meta" class="text-xs text-edu-text/70 mt-0.5">Tổng cộng: 0 trang</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            <button id="convert-reset-btn" class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold transition flex items-center gap-2">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span data-i18n="common.changeFile">Chọn file khác</span>
+            </button>
+            <button id="convert-download-zip-btn" class="px-5 py-2.5 rounded-2xl bg-edu-teal hover:bg-edu-text text-white text-xs sm:text-sm font-extrabold shadow-edu-md transition active:scale-95 flex items-center gap-2">
+              <i class="fa-solid fa-file-zipper text-edu-yellow"></i>
+              <span data-i18n="convert.downloadZip">Tải Toàn Bộ (ZIP)</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="convert-pages-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+      </div>
+    </section>
+
+    <!-- MODULE 2: MERGE PDF & IMAGES (WITH A4 PORTRAIT/LANDSCAPE & REORDER) -->
+    <section id="module-merge" class="hidden space-y-6">
+      <div id="merge-drop-zone" class="bg-white rounded-3xl border-2 border-dashed border-edu-green/60 hover:border-edu-green bg-gradient-to-b from-white to-edu-cream/20 shadow-edu-sm p-8 sm:p-12 transition-all group cursor-pointer text-center">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-edu-tint group-hover:bg-edu-yellow text-edu-teal flex items-center justify-center text-3xl transition-all duration-300 shadow-inner group-hover:scale-105 border-2 border-edu-green/30">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <h2 class="mt-4 text-xl sm:text-2xl font-black text-edu-teal tracking-tight" data-i18n="merge.title">Kéo thả nhiều file PDF & Ảnh (JPG, PNG, WEBP)</h2>
+        <p class="mt-1 text-xs sm:text-sm text-edu-text/80 max-w-lg mx-auto" data-i18n="merge.desc">
+          Tự do kéo thả sắp xếp thứ tự, chọn chuẩn khổ giấy đầu ra A4 dọc hoặc ngang, xoay góc và ghép thành 1 file PDF hoàn chỉnh.
+        </p>
+
+        <button type="button" class="mt-5 px-6 py-2.5 rounded-2xl bg-edu-teal text-white font-bold text-xs sm:text-sm hover:bg-edu-text shadow-edu-sm flex items-center gap-2 mx-auto transition active:scale-95">
+          <i class="fa-solid fa-plus text-edu-yellow"></i>
+          <span data-i18n="merge.addFiles">Thêm Tệp Từ Thiết Bị (Chọn nhiều tệp)</span>
+        </button>
+        <input type="file" id="merge-file-input" multiple class="hidden" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*">
+      </div>
+
+      <div id="merge-workspace" class="hidden space-y-4">
+        <!-- Toolbar: Layout A4 Options, Selection & Export -->
+        <div class="bg-white rounded-3xl border-2 border-edu-green p-4 sm:p-5 shadow-edu-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+          
+          <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold">
+            <span class="px-3 py-1.5 bg-edu-cream font-bold text-edu-teal rounded-xl border border-edu-yellow flex items-center gap-1.5">
+              <i class="fa-solid fa-check-double text-edu-green"></i>
+              <span data-i18n="merge.selected">Đã chọn:</span> <b id="merge-stat-selected" class="text-edu-teal">0</b>/<span id="merge-stat-total">0</span> <span data-i18n="common.pages">trang</span>
+            </span>
+
+            <button id="merge-select-all-btn" class="px-3 py-1.5 bg-slate-50 hover:bg-edu-cream/70 text-edu-text rounded-xl border border-slate-200 transition flex items-center gap-1">
+              <i class="fa-regular fa-square-check text-edu-green"></i>
+              <span data-i18n="common.selectAll">Chọn tất cả</span>
+            </button>
+            <button id="merge-deselect-all-btn" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-edu-text rounded-xl border border-slate-200 transition flex items-center gap-1">
+              <i class="fa-regular fa-square"></i>
+              <span data-i18n="common.deselect">Bỏ chọn</span>
+            </button>
+            <button id="merge-clear-all-btn" class="px-3 py-1.5 bg-edu-red/10 hover:bg-edu-red/20 text-edu-red rounded-xl border border-edu-red/30 transition flex items-center gap-1">
+              <i class="fa-solid fa-trash-can"></i>
+              <span data-i18n="common.clearAll">Xóa hết</span>
+            </button>
+          </div>
+
+          <!-- A4 Layout Options & Execution Toolbar -->
+          <div class="flex flex-wrap items-center gap-2 justify-end">
+            <div class="flex items-center gap-1.5 bg-edu-cream/80 px-3 py-1.5 rounded-2xl border border-edu-yellow font-semibold text-xs">
+              <span class="text-edu-teal"><i class="fa-solid fa-file text-edu-green mr-1"></i><span data-i18n="merge.layout">Khổ đầu ra:</span></span>
+              <select id="merge-a4-layout" class="bg-white text-edu-teal font-bold px-2 py-1 rounded-xl border border-edu-green/40 focus:outline-none">
+                <option value="portrait" data-i18n="merge.portrait">A4 Dọc (Portrait)</option>
+                <option value="landscape" data-i18n="merge.landscape">A4 Ngang (Landscape)</option>
+                <option value="fit" data-i18n="merge.fit">Tự động theo trang gốc (Fit)</option>
+              </select>
+            </div>
+
+            <div class="relative w-full sm:w-48">
+              <input 
+                type="text" 
+                id="merge-filename-input" 
+                placeholder="Tai_lieu_da_ghep" 
+                value="Ghep_tai_lieu_hoc_tap" 
+                class="w-full pl-3 pr-10 py-2 text-xs sm:text-sm bg-slate-50 border-2 border-edu-green/40 rounded-2xl focus:outline-none focus:border-edu-teal font-bold text-edu-teal"
+              >
+              <span class="absolute right-3 top-2 text-xs font-bold text-edu-teal/50">.pdf</span>
+            </div>
+
+            <button 
+              id="merge-export-btn" 
+              class="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-edu-teal hover:bg-edu-text text-white font-extrabold text-xs sm:text-sm shadow-edu-md transition active:scale-95 flex items-center justify-center gap-2 shrink-0 disabled:opacity-50"
+            >
+              <i class="fa-solid fa-file-export text-edu-yellow"></i>
+              <span data-i18n="merge.export">Ghép &amp; Tải PDF Ngay</span>
+            </button>
+          </div>
+
+        </div>
+
+        <div class="bg-edu-cream/70 border-2 border-edu-yellow rounded-2xl px-4 py-2.5 text-xs text-edu-teal font-medium flex items-center gap-2">
+          <i class="fa-solid fa-lightbulb text-edu-green text-sm"></i>
+          <span data-i18n="merge.tip"><b>Mẹo:</b> <b>Click chuột trái giữ và kéo</b> trực tiếp lên thẻ trang để di chuyển đến vị trí mong muốn. Cũng có thể dùng nút mũi tên <b>← →</b> hoặc biểu tượng kéo. Chọn khổ A4 dọc/ngang trước khi xuất file.</span>
+        </div>
+
+        <!-- Reorderable Grid -->
+        <div id="merge-pages-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5"></div>
+      </div>
+    </section>
+
+    <!-- MODULE 3: COMPRESS PDF (FIXED CLICK UPLOAD) -->
+    <section id="module-compress" class="hidden space-y-6">
+      <div id="compress-upload-card" class="bg-white rounded-3xl border-2 border-dashed border-edu-green/60 hover:border-edu-green bg-gradient-to-b from-white to-edu-cream/20 shadow-edu-sm p-8 sm:p-12 transition-all group cursor-pointer text-center">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-edu-tint group-hover:bg-edu-yellow text-edu-teal flex items-center justify-center text-3xl transition-all duration-300 shadow-inner group-hover:scale-105 border-2 border-edu-green/30">
+          <i class="fa-solid fa-compress"></i>
+        </div>
+        <h2 class="mt-4 text-xl sm:text-2xl font-black text-edu-teal tracking-tight" data-i18n="compress.title">Kéo thả file PDF cần nén dung lượng</h2>
+        <p class="mt-1 text-xs sm:text-sm text-edu-text/80 max-w-lg mx-auto" data-i18n="compress.desc">
+          Giảm dung lượng thông minh với thuật toán cân bằng chất lượng tối ưu. Chọn Mức 1→8: scale + JPEG được tinh chỉnh để giữ nét chữ/ảnh tốt nhất có thể ở từng mức.
+        </p>
+
+        <button type="button" id="compress-browse-btn" class="mt-5 px-6 py-2.5 rounded-2xl bg-edu-teal text-white font-bold text-xs sm:text-sm hover:bg-edu-text shadow-edu-sm flex items-center gap-2 mx-auto transition active:scale-95">
+          <i class="fa-solid fa-file-pdf text-edu-yellow"></i>
+          <span data-i18n="compress.browse">Chọn Tệp PDF Cần Nén</span>
+        </button>
+        <input type="file" id="compress-file-input" class="hidden" accept=".pdf,application/pdf">
+      </div>
+
+      <div id="compress-workspace" class="hidden space-y-5">
+        <div class="bg-white rounded-3xl border-2 border-edu-green p-5 sm:p-6 shadow-edu-sm space-y-5">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <div class="w-12 h-12 rounded-2xl bg-edu-cream text-edu-teal flex items-center justify-center text-xl font-black border border-edu-yellow shrink-0">
+                <i class="fa-solid fa-file-pdf"></i>
+              </div>
+              <div class="truncate">
+                <h3 id="compress-filename" class="font-bold text-edu-teal text-base truncate max-w-md">Tai_lieu.pdf</h3>
+                <p class="text-xs text-edu-text/70 mt-0.5">Kích thước gốc: <span id="compress-orig-size" class="font-extrabold text-edu-green">0 MB</span> &bull; Tổng trang: <span id="compress-page-count" class="font-semibold">0</span></p>
+              </div>
+            </div>
+
+            <button id="compress-change-btn" class="px-4 py-2 rounded-2xl border-2 border-slate-200 hover:bg-slate-100 text-edu-text text-xs sm:text-sm font-bold transition flex items-center gap-2 shrink-0">
+              <i class="fa-solid fa-arrow-rotate-left"></i>
+              <span data-i18n="common.changeFile">Chọn file khác</span>
+            </button>
+          </div>
+
+          <!-- Compression Levels Options -->
+          <div class="space-y-3">
+            <label class="block text-xs font-black uppercase tracking-wider text-edu-teal/80">
+              <i class="fa-solid fa-sliders text-edu-green mr-1"></i> <span data-i18n="compress.levelLabel">Chọn mức nén (1 = giữ nét nhất · 8 = nhỏ nhất):</span>
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5 font-bold text-xs">
+              <label class="compress-level-card border-2 border-slate-200 bg-white p-3 rounded-2xl text-center cursor-pointer hover:border-edu-teal transition flex flex-col items-center justify-center gap-1" data-level="1">
+                <input type="radio" name="compress-level" value="1" class="hidden">
+                <span class="text-base text-edu-teal font-black" data-i18n="compress.lv1">Mức 1</span>
+                <span class="text-[10px] text-slate-500 font-medium" data-i18n="compress.lv1d">Siêu nét</span>
+              </label>
+              <label class="compress-level-card border-2 border-slate-200 bg-white p-3 rounded-2xl text-center cursor-pointer hover:border-edu-teal transition flex flex-col items-center justify-center gap-1" data-level="2">
+                <input type="radio" name="compress-level" value="2" class="hidden">
+                <span class="text-base text-edu-teal font-black" data-i18n="compress.lv2">Mức 2</span>
+                <span class="text-[10px] text-slate-500 font-medium" data-i18n="compress.lv2d">Nét cao</span>
+              </label>
+              <label class="compress-level-card border-2 border-slate-200 bg-white p-3 rounded-2xl text-center cursor-pointer hover:border-edu-teal transition flex flex-col items-center justify-center gap-1" data-level="3">
+                <input type="radio" name="compress-level" value="3" class="hidden">
+                <span class="text-base text-edu-teal font-black" data-i18n="compress.lv3">Mức 3</span>
+                <span class="text-[10px] text-slate-500 font-medium" data-i18n="compress.lv3d">Chuẩn+</span>
+              </label>
+              <label class="compress-level-card border-2 border-edu-green bg-edu-tint p-3 rounded-2xl text-center cursor-pointer hover:border-edu-teal transition flex flex-col items-center justify-center gap-1" data-level="4">
+                <input type="radio" name="compress-level" value="4" class="hidden" checked>
+                <span class="text-base text-edu-teal font-black" data-i18n="compress.lv4">Mức 4</span>
+                <span class="text-[10px] text-slate-500 font-medium" data-i18n="compress.lv4d">Khuyên dùng</span>
+              </label>
+              <label class="compress-level-card border-2 border-slate-200 bg-white p-3 rounded-2xl text-center cursor-pointer hover:border-edu-teal transition flex flex-col items-center justify-center gap-1" data-level="5">
+                <input type="radio" name="compress-level" value="5" class="hidden">
+                <span class="text-base text-edu-teal font-black" data-i18n="compress.lv5">Mức 5</span>
+                <span class="text-[10px] text-slate-500 font-medium" data-i18n="compress.lv5d">Thu gọn</span>
+              </label>
+              <label class="compress-level-card border-2 border-slate-200 bg-white p-3 rounded-2xl text-center cursor-pointer hover:border-edu-teal transition flex flex-col items-center justify-center gap-1" data-level="6">
+                <input type="radio" name="compress-level" value="6" class="hidden">
+                <span class="text-base text-edu-teal font-black" data-i18n="compress.lv6">Mức 6</span>
+                <span class="text-[10px] text-slate-500 font-medium" data-i18n="compress.lv6d">Nhẹ</span>
+              </label>
+              <label class="compress-level-card border-2 border-slate-200 bg-white p-3 rounded-2xl text-center cursor-pointer hover:border-edu-teal transition flex flex-col items-center justify-center gap-1" data-level="7">
+                <input type="radio" name="compress-level" value="7" class="hidden">
+                <span class="text-base text-edu-teal font-black" data-i18n="compress.lv7">Mức 7</span>
+                <span class="text-[10px] text-slate-500 font-medium" data-i18n="compress.lv7d">Rất nhỏ</span>
+              </label>
+              <label class="compress-level-card border-2 border-slate-200 bg-white p-3 rounded-2xl text-center cursor-pointer hover:border-edu-teal transition flex flex-col items-center justify-center gap-1" data-level="8">
+                <input type="radio" name="compress-level" value="8" class="hidden">
+                <span class="text-base text-edu-teal font-black" data-i18n="compress.lv8">Mức 8</span>
+                <span class="text-[10px] text-slate-500 font-medium" data-i18n="compress.lv8d">Cực nhỏ</span>
+              </label>
+            </div>
+
+            <!-- Ước tính dung lượng sau nén -->
+            <div id="compress-estimate-box" class="mt-2 flex flex-wrap items-center gap-3 px-4 py-3 rounded-2xl bg-edu-cream/80 border-2 border-edu-yellow text-xs sm:text-sm">
+              <div class="flex items-center gap-2 text-edu-teal font-bold">
+                <i class="fa-solid fa-gauge-high text-edu-green"></i>
+                <span data-i18n="compress.selectedLevel">Mức đang chọn:</span> <b id="compress-estimate-level" class="text-edu-teal">Mức 4</b>
+              </div>
+              <div class="h-4 w-px bg-edu-green/40 hidden sm:block"></div>
+              <div class="text-edu-text font-semibold">
+                <span data-i18n="compress.estLabel">Ước tính sau nén:</span>
+                <span id="compress-estimate-size" class="font-black text-edu-teal ml-1">—</span>
+                <span id="compress-estimate-ratio" class="text-edu-green font-bold ml-1.5"></span>
+              </div>
+              <span id="compress-estimate-status" class="text-[11px] text-edu-teal/70 font-medium ml-auto" data-i18n="compress.estHint">Chọn mức để xem dung lượng dự kiến</span>
+            </div>
+          </div>
+
+          <!-- Execution & Result Preview -->
+          <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <span class="text-xs font-bold text-edu-teal" data-i18n="compress.outName">Tên file sau nén:</span>
+              <input 
+                type="text" 
+                id="compress-out-filename" 
+                value="Tai_lieu_da_nen" 
+                class="px-3 py-2 text-xs sm:text-sm bg-slate-50 border-2 border-edu-green/40 rounded-xl focus:outline-none focus:border-edu-teal font-bold text-edu-teal w-full sm:w-64"
+              >
+            </div>
+
+            <button 
+              id="compress-execute-btn" 
+              class="w-full sm:w-auto px-6 py-3 rounded-2xl bg-edu-teal hover:bg-edu-text text-white font-extrabold text-xs sm:text-sm shadow-edu-md transition active:scale-95 flex items-center justify-center gap-2 shrink-0"
+            >
+              <i class="fa-solid fa-compress text-edu-yellow"></i>
+              <span data-i18n="compress.execute">Tiến Hành Nén PDF Ngay</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- MODULE 4: SPLIT PDF -->
+    <section id="module-split" class="hidden space-y-6">
+      <div id="split-upload-card" class="bg-white rounded-3xl border-2 border-dashed border-edu-green/60 hover:border-edu-green bg-gradient-to-b from-white to-edu-cream/20 shadow-edu-sm p-8 sm:p-12 transition-all group cursor-pointer text-center">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-edu-tint group-hover:bg-edu-yellow text-edu-teal flex items-center justify-center text-3xl transition-all duration-300 shadow-inner group-hover:scale-105 border-2 border-edu-green/30">
+          <i class="fa-solid fa-scissors"></i>
+        </div>
+        <h2 class="mt-4 text-xl sm:text-2xl font-black text-edu-teal tracking-tight" data-i18n="split.title">Kéo thả file PDF cần phân tách</h2>
+        <p class="mt-1 text-xs sm:text-sm text-edu-text/80 max-w-lg mx-auto" data-i18n="split.desc">
+          Tách từng trang lẻ nén ZIP, chia theo dải chương mục (vd: 1-3, 4, 5-8), hoặc tích chọn trực quan xuất file chuẩn tỷ lệ 1:1 không lỗi nét.
+        </p>
+
+        <button type="button" class="mt-5 px-6 py-2.5 rounded-2xl bg-edu-teal text-white font-bold text-xs sm:text-sm hover:bg-edu-text shadow-edu-sm flex items-center gap-2 mx-auto transition active:scale-95">
+          <i class="fa-solid fa-file-pdf text-edu-yellow"></i>
+          <span data-i18n="split.browse">Chọn Tệp PDF</span>
+        </button>
+        <input type="file" id="split-file-input" class="hidden" accept=".pdf,application/pdf">
+      </div>
+
+      <div id="split-workspace" class="hidden space-y-5">
+        <div class="bg-white rounded-3xl border-2 border-edu-green p-4 sm:p-5 shadow-edu-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-edu-cream text-edu-teal flex items-center justify-center text-xl font-black border border-edu-yellow">
+              <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <div>
+              <h3 id="split-source-filename" class="font-bold text-edu-teal text-base truncate max-w-sm">Chuyen_de_on_thi.pdf</h3>
+              <p class="text-xs text-edu-text/70 mt-0.5">
+                Tổng cộng: <span id="split-total-pages-badge" class="font-extrabold text-edu-green">0</span> trang &bull; Kích thước: <span id="split-filesize-badge" class="font-semibold text-edu-teal">0 MB</span>
+              </p>
+            </div>
+          </div>
+
+          <button id="split-change-file-btn" class="px-4 py-2 rounded-2xl border-2 border-slate-200 hover:bg-slate-100 text-edu-text text-xs sm:text-sm font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-arrow-rotate-left"></i>
+            <span data-i18n="common.changeFile">Chọn file khác</span>
+          </button>
+        </div>
+
+        <div class="bg-white rounded-3xl border-2 border-edu-green p-4 sm:p-5 shadow-edu-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="text-xs font-black uppercase tracking-wider text-edu-teal/70 flex items-center gap-1.5">
+              <i class="fa-solid fa-layer-group text-edu-green"></i>
+              <span data-i18n="split.modeLabel">Chọn Chế Độ Tách File:</span>
+            </div>
+            <span class="text-[11px] font-bold text-edu-teal bg-edu-cream px-3 py-1 rounded-full border border-edu-yellow" data-i18n="split.ratioBadge">
+              Bảo toàn tỷ lệ 1:1 chuẩn xác
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-edu-cream/40 p-1.5 rounded-2xl border border-edu-yellow/60 text-xs sm:text-sm font-bold">
+            <button id="split-mode-btn-all" class="split-tab active py-2.5 px-3 rounded-xl bg-edu-teal text-white shadow transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-copy"></i>
+              <span data-i18n="split.modeAll">Tách từng trang lẻ (ZIP)</span>
+            </button>
+            <button id="split-mode-btn-ranges" class="split-tab py-2.5 px-3 rounded-xl text-edu-teal hover:bg-white/60 transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-arrows-split-up-and-left"></i>
+              <span data-i18n="split.modeRanges">Tách theo dải trang (Range)</span>
+            </button>
+            <button id="split-mode-btn-visual" class="split-tab py-2.5 px-3 rounded-xl text-edu-teal hover:bg-white/60 transition flex items-center justify-center gap-2">
+              <i class="fa-regular fa-square-check"></i>
+              <span data-i18n="split.modeVisual">Tích chọn trang trực quan</span>
+            </button>
+          </div>
+
+          <div id="split-mode-pane-all" class="p-4 rounded-2xl bg-edu-cream/50 border border-edu-yellow text-xs sm:text-sm text-edu-text space-y-1">
+            <div class="font-bold text-edu-teal flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-edu-green"></i>
+              <span>Mỗi trang sách/bài giảng sẽ được cắt thành 1 file PDF độc lập.</span>
+            </div>
+            <p class="text-edu-teal/80">Hệ thống sẽ nén toàn bộ các file con thành 1 file <b>.ZIP</b> an toàn tuyệt đối, tương thích 100% khi giải nén bằng WinRAR hoặc Windows Explorer.</p>
+          </div>
+
+          <div id="split-mode-pane-ranges" class="hidden p-4 rounded-2xl bg-edu-cream/50 border border-edu-yellow text-xs sm:text-sm space-y-3">
+            <div class="font-bold text-edu-teal flex items-center gap-1.5">
+              <i class="fa-solid fa-sliders text-edu-green"></i>
+              <span>Nhập dải trang muốn chia (cách nhau bằng dấu phẩy):</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input 
+                type="text" 
+                id="split-range-input" 
+                placeholder="Ví dụ: 1-3, 4, 5-8" 
+                class="flex-1 px-4 py-2.5 text-xs sm:text-sm bg-white border-2 border-edu-green/40 rounded-xl focus:outline-none focus:border-edu-teal font-bold text-edu-teal"
+              >
+              <button id="split-range-apply-btn" class="px-5 py-2.5 bg-edu-teal hover:bg-edu-text text-white rounded-xl font-bold transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-check text-edu-yellow"></i>
+                <span>Cập nhật dải</span>
+              </button>
+            </div>
+            <div id="split-range-preview-chips" class="flex flex-wrap gap-2 pt-1"></div>
+          </div>
+
+          <div id="split-mode-pane-visual" class="hidden p-4 rounded-2xl bg-edu-cream/50 border border-edu-yellow text-xs sm:text-sm space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span class="font-bold text-edu-teal">Click trực tiếp vào các thẻ bên dưới để chọn các trang cần lấy:</span>
+              <div class="flex items-center gap-2">
+                <button id="split-visual-select-all" class="px-3 py-1 bg-white border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-50">Chọn tất cả</button>
+                <button id="split-visual-deselect-all" class="px-3 py-1 bg-white border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-50">Bỏ chọn hết</button>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-4 text-xs font-bold text-edu-teal pt-1">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="split-visual-mode" value="merged" checked class="text-edu-teal focus:ring-edu-green w-4 h-4">
+                <span>Gộp các trang được tick thành <b>1 file PDF mới</b></span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="split-visual-mode" value="separate" class="text-edu-teal focus:ring-edu-green w-4 h-4">
+                <span>Xuất từng trang được chọn thành <b>từng file riêng</b></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-edu-teal" data-i18n="split.outName">Tên file kết quả:</span>
+              <input 
+                type="text" 
+                id="split-filename-prefix" 
+                value="Tach_tai_lieu_hoc_tap" 
+                class="px-3 py-1.5 text-xs bg-slate-50 border-2 border-edu-green/40 rounded-xl focus:outline-none focus:border-edu-teal font-bold text-edu-teal w-52"
+              >
+            </div>
+
+            <button 
+              id="split-execute-btn" 
+              class="px-6 py-2.5 bg-edu-teal hover:bg-edu-text text-white rounded-2xl text-xs sm:text-sm font-black shadow-edu-md transition active:scale-95 flex items-center justify-center gap-2"
+            >
+              <i class="fa-solid fa-scissors text-edu-yellow"></i>
+              <span id="split-execute-label" data-i18n="split.execute">Bắt đầu Tách &amp; Tải Về</span>
+            </button>
+          </div>
+
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-center justify-between text-xs sm:text-sm font-bold text-edu-teal">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-table-cells text-edu-green"></i>
+              <span>Danh sách các trang tài liệu (Click để phóng to):</span>
+            </span>
+          </div>
+          <div id="split-pages-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODULE 5: WATERMARK -->
+    <section id="module-watermark" class="hidden space-y-6">
+      <div id="wm-upload-card" class="bg-white rounded-3xl border-2 border-dashed border-edu-green/60 hover:border-edu-green bg-gradient-to-b from-white to-edu-cream/20 shadow-edu-sm p-8 sm:p-12 transition-all group cursor-pointer text-center">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-edu-tint group-hover:bg-edu-yellow text-edu-teal flex items-center justify-center text-3xl transition-all duration-300 shadow-inner group-hover:scale-105 border-2 border-edu-green/30">
+          <i class="fa-solid fa-stamp"></i>
+        </div>
+        <h2 class="mt-4 text-xl sm:text-2xl font-black text-edu-teal tracking-tight" data-i18n="wm.title">Kéo thả file PDF cần đóng dấu</h2>
+        <p class="mt-1 text-xs sm:text-sm text-edu-text/80 max-w-lg mx-auto" data-i18n="wm.desc">
+          Thêm chữ watermark chéo hoặc ngang lên mọi trang — phù hợp tài liệu học tập, đề thi, biên bản.
+        </p>
+        <button type="button" id="wm-browse-btn" class="mt-5 px-6 py-2.5 rounded-2xl bg-edu-teal text-white font-bold text-xs sm:text-sm hover:bg-edu-text shadow-edu-sm flex items-center gap-2 mx-auto transition active:scale-95">
+          <i class="fa-solid fa-file-pdf text-edu-yellow"></i>
+          <span data-i18n="wm.browse">Chọn Tệp PDF</span>
+        </button>
+        <input type="file" id="wm-file-input" class="hidden" accept=".pdf,application/pdf">
+      </div>
+
+      <div id="wm-workspace" class="hidden space-y-5">
+        <div class="bg-white rounded-3xl border-2 border-edu-green p-5 sm:p-6 shadow-edu-sm space-y-5">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div class="flex items-center gap-3 w-full sm:w-auto min-w-0">
+              <div class="w-12 h-12 rounded-2xl bg-edu-cream text-edu-teal flex items-center justify-center text-xl font-black border border-edu-yellow shrink-0">
+                <i class="fa-solid fa-file-pdf"></i>
+              </div>
+              <div class="truncate">
+                <h3 id="wm-filename" class="font-bold text-edu-teal text-base truncate max-w-md">Tai_lieu.pdf</h3>
+                <p class="text-xs text-edu-text/70 mt-0.5"><span data-i18n="common.pages">trang</span>: <span id="wm-page-count" class="font-extrabold text-edu-green">0</span></p>
+              </div>
+            </div>
+            <button id="wm-change-btn" class="px-4 py-2 rounded-2xl border-2 border-slate-200 hover:bg-slate-100 text-edu-text text-xs sm:text-sm font-bold transition flex items-center gap-2 shrink-0">
+              <i class="fa-solid fa-arrow-rotate-left"></i>
+              <span data-i18n="common.changeFile">Chọn file khác</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs sm:text-sm">
+            <div>
+              <label class="block text-xs font-black uppercase tracking-wider text-edu-teal/80 mb-1.5" data-i18n="wm.textLabel">Nội dung đóng dấu</label>
+              <input type="text" id="wm-text" value="BẢN SAO - CHỈ DÙNG HỌC TẬP" class="w-full px-3 py-2.5 bg-slate-50 border-2 border-edu-green/40 rounded-xl focus:outline-none focus:border-edu-teal font-bold text-edu-teal">
+            </div>
+            <div>
+              <label class="block text-xs font-black uppercase tracking-wider text-edu-teal/80 mb-1.5" data-i18n="wm.opacityLabel">Độ mờ (%)</label>
+              <input type="range" id="wm-opacity" min="10" max="70" value="28" class="w-full accent-edu-teal">
+              <div class="text-center font-bold text-edu-teal text-xs mt-0.5"><span id="wm-opacity-val">28</span>%</div>
+            </div>
+            <div>
+              <label class="block text-xs font-black uppercase tracking-wider text-edu-teal/80 mb-1.5" data-i18n="wm.angleLabel">Góc nghiêng</label>
+              <select id="wm-angle" class="w-full px-3 py-2.5 bg-white border-2 border-edu-green/40 rounded-xl font-bold text-edu-teal focus:outline-none">
+                <option value="-45" selected data-i18n="wm.angleDiag">Chéo -45°</option>
+                <option value="0" data-i18n="wm.angleHoriz">Ngang 0°</option>
+                <option value="-30">-30°</option>
+                <option value="45">+45°</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-black uppercase tracking-wider text-edu-teal/80 mb-1.5" data-i18n="wm.colorLabel">Màu chữ</label>
+              <select id="wm-color" class="w-full px-3 py-2.5 bg-white border-2 border-edu-green/40 rounded-xl font-bold text-edu-teal focus:outline-none">
+                <option value="#888888" selected data-i18n="wm.colorGray">Xám</option>
+                <option value="#E94B4B" data-i18n="wm.colorRed">Đỏ</option>
+                <option value="#08665B" data-i18n="wm.colorTeal">Xanh teal</option>
+                <option value="#1e40af" data-i18n="wm.colorBlue">Xanh dương</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <span class="text-xs font-bold text-edu-teal" data-i18n="wm.outName">Tên file kết quả:</span>
+              <input type="text" id="wm-out-filename" value="Tai_lieu_watermark" class="px-3 py-2 text-xs sm:text-sm bg-slate-50 border-2 border-edu-green/40 rounded-xl focus:outline-none focus:border-edu-teal font-bold text-edu-teal w-full sm:w-56">
+            </div>
+            <button id="wm-execute-btn" class="w-full sm:w-auto px-6 py-3 rounded-2xl bg-edu-teal hover:bg-edu-text text-white font-extrabold text-xs sm:text-sm shadow-edu-md transition active:scale-95 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-stamp text-edu-yellow"></i>
+              <span data-i18n="wm.execute">Đóng Dấu &amp; Tải PDF</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODULE 6: SCAN CAMERA → PDF (Mobile-optimized · Adobe Scan inspired) -->
+    <section id="module-scan" class="hidden space-y-4">
+      <div class="bg-white rounded-3xl border-2 border-edu-green shadow-edu-sm overflow-hidden">
+        <!-- Header -->
+        <div class="p-3 sm:p-4 border-b border-edu-green/20 bg-edu-tint flex flex-col gap-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <h2 class="text-base sm:text-xl font-black text-edu-teal" data-i18n="scan.title">Scan tài liệu bằng camera</h2>
+              <p class="text-[11px] sm:text-xs text-edu-text/80 mt-0.5" data-i18n="scan.desc">Chụp từng trang → căn 4 góc → lọc nét → xuất PDF A4 (tối ưu điện thoại).</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="scan-start-btn" class="px-3.5 py-2.5 rounded-2xl bg-edu-teal hover:bg-edu-text text-white text-xs font-bold shadow-edu-sm transition flex items-center gap-1.5">
+              <i class="fa-solid fa-video text-edu-yellow"></i>
+              <span data-i18n="scan.start">Bật camera</span>
+            </button>
+            <button id="scan-stop-btn" class="hidden px-3.5 py-2.5 rounded-2xl bg-edu-red/90 hover:bg-edu-red text-white text-xs font-bold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-stop"></i>
+              <span data-i18n="scan.stop">Tắt</span>
+            </button>
+            <button id="scan-switch-btn" class="hidden px-3 py-2.5 rounded-2xl border-2 border-edu-green/40 hover:bg-edu-cream text-edu-teal text-xs font-bold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-camera-rotate"></i>
+              <span data-i18n="scan.switch">Đổi cam</span>
+            </button>
+            <button id="scan-flash-btn" class="hidden px-3 py-2.5 rounded-2xl border-2 border-edu-green/40 hover:bg-edu-cream text-edu-teal text-xs font-bold transition flex items-center gap-1.5" title="Đèn flash">
+              <i class="fa-solid fa-bolt" id="scan-flash-icon"></i>
+              <span id="scan-flash-label" data-i18n="scan.flash">Flash</span>
+            </button>
+            <button id="scan-import-btn" class="px-3.5 py-2.5 rounded-2xl border-2 border-edu-green/40 hover:bg-edu-cream text-edu-teal text-xs font-bold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-images text-edu-green"></i>
+              <span data-i18n="scan.import">Thêm ảnh</span>
+            </button>
+            <input type="file" id="scan-import-input" class="hidden" accept="image/*" multiple>
+          </div>
+        </div>
+
+        <!-- Preview area: full width on mobile -->
+        <div id="scan-preview-wrap" class="relative bg-slate-900 min-h-[52vh] sm:min-h-[380px] flex items-center justify-center overflow-hidden">
+          <video id="scan-video" playsinline autoplay muted class="w-full h-full max-h-[70vh] object-contain hidden"></video>
+          <canvas id="scan-capture-canvas" class="hidden"></canvas>
+          <div id="scan-overlay" class="absolute inset-0 pointer-events-none hidden z-[5]">
+            <svg id="scan-overlay-svg" class="absolute inset-0 w-full h-full overflow-visible">
+              <polygon id="scan-quad" fill="rgba(32,166,83,0.15)" stroke="#F9DF68" stroke-width="2.5" stroke-dasharray="8 5" points=""/>
+            </svg>
+            <div id="scan-handle-tl" class="scan-corner absolute w-9 h-9 -ml-4.5 -mt-4.5 rounded-full bg-edu-yellow border-[3px] border-edu-teal shadow-lg cursor-grab active:cursor-grabbing pointer-events-auto touch-none z-10 flex items-center justify-center" data-corner="0" title="Góc trên-trái">
+              <span class="w-2 h-2 rounded-full bg-edu-teal"></span>
+            </div>
+            <div id="scan-handle-tr" class="scan-corner absolute w-9 h-9 -ml-4.5 -mt-4.5 rounded-full bg-edu-yellow border-[3px] border-edu-teal shadow-lg cursor-grab active:cursor-grabbing pointer-events-auto touch-none z-10 flex items-center justify-center" data-corner="1" title="Góc trên-phải">
+              <span class="w-2 h-2 rounded-full bg-edu-teal"></span>
+            </div>
+            <div id="scan-handle-br" class="scan-corner absolute w-9 h-9 -ml-4.5 -mt-4.5 rounded-full bg-edu-yellow border-[3px] border-edu-teal shadow-lg cursor-grab active:cursor-grabbing pointer-events-auto touch-none z-10 flex items-center justify-center" data-corner="2" title="Góc dưới-phải">
+              <span class="w-2 h-2 rounded-full bg-edu-teal"></span>
+            </div>
+            <div id="scan-handle-bl" class="scan-corner absolute w-9 h-9 -ml-4.5 -mt-4.5 rounded-full bg-edu-yellow border-[3px] border-edu-teal shadow-lg cursor-grab active:cursor-grabbing pointer-events-auto touch-none z-10 flex items-center justify-center" data-corner="3" title="Góc dưới-trái">
+              <span class="w-2 h-2 rounded-full bg-edu-teal"></span>
+            </div>
+          </div>
+          <div id="scan-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-white/70 p-6 text-center z-[6]">
+            <i class="fa-solid fa-camera text-4xl mb-3 text-edu-yellow"></i>
+            <p class="text-sm font-semibold" data-i18n="scan.placeholder">Bấm «Bật camera» hoặc «Thêm ảnh» từ thư viện</p>
+            <p class="text-[11px] mt-2 text-white/50" data-i18n="scan.httpsHint">Cần HTTPS hoặc localhost để dùng camera</p>
+          </div>
+
+          <!-- Bottom controls over preview -->
+          <div class="absolute bottom-3 left-0 right-0 z-20 px-3">
+            <div class="flex items-center justify-center gap-2 flex-wrap">
+              <button id="scan-auto-detect-btn" disabled class="px-3 py-2.5 rounded-full bg-white/95 text-edu-teal font-bold text-[11px] shadow border border-edu-green/40 disabled:opacity-40 active:scale-95 transition flex items-center gap-1">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span data-i18n="scan.autoDetect">Tự phát hiện</span>
+              </button>
+              <button id="scan-reset-corners-btn" disabled class="px-3 py-2.5 rounded-full bg-white/95 text-edu-teal font-bold text-[11px] shadow border border-edu-green/40 disabled:opacity-40 active:scale-95 transition flex items-center gap-1">
+                <i class="fa-solid fa-vector-square"></i>
+                <span data-i18n="scan.resetCorners">Đặt lại góc</span>
+              </button>
+              <button id="scan-capture-btn" disabled class="px-7 py-3.5 rounded-full bg-edu-yellow text-edu-teal font-black text-sm shadow-lg border-2 border-white disabled:opacity-40 active:scale-95 transition flex items-center gap-2 min-w-[140px] justify-center">
+                <i class="fa-solid fa-circle-dot text-xl"></i>
+                <span data-i18n="scan.capture">Chụp trang</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter + pages + export -->
+        <div class="p-3 sm:p-5 space-y-4 border-t border-edu-green/20">
+          <!-- Filter strip (Adobe-like) -->
+          <div>
+            <div class="text-[10px] font-black uppercase tracking-wider text-edu-teal/70 mb-1.5" data-i18n="scan.filterLabel">Bộ lọc (áp dụng khi chụp):</div>
+            <div class="flex gap-2 overflow-x-auto pb-1 text-xs font-bold">
+              <label class="scan-filter-chip shrink-0 px-3 py-2 rounded-xl border-2 border-edu-green bg-edu-tint text-edu-teal cursor-pointer transition" data-filter="auto">
+                <input type="radio" name="scan-filter" value="auto" class="hidden" checked>
+                <i class="fa-solid fa-sparkles mr-1 text-edu-green"></i><span data-i18n="scan.filterAuto">Tự động</span>
+              </label>
+              <label class="scan-filter-chip shrink-0 px-3 py-2 rounded-xl border-2 border-slate-200 bg-white text-edu-text cursor-pointer transition" data-filter="original">
+                <input type="radio" name="scan-filter" value="original" class="hidden">
+                <i class="fa-solid fa-image mr-1"></i><span data-i18n="scan.filterOrig">Gốc</span>
+              </label>
+              <label class="scan-filter-chip shrink-0 px-3 py-2 rounded-xl border-2 border-slate-200 bg-white text-edu-text cursor-pointer transition" data-filter="gray">
+                <input type="radio" name="scan-filter" value="gray" class="hidden">
+                <i class="fa-solid fa-circle-half-stroke mr-1"></i><span data-i18n="scan.filterGray">Xám</span>
+              </label>
+              <label class="scan-filter-chip shrink-0 px-3 py-2 rounded-xl border-2 border-slate-200 bg-white text-edu-text cursor-pointer transition" data-filter="bw">
+                <input type="radio" name="scan-filter" value="bw" class="hidden">
+                <i class="fa-solid fa-circle mr-1"></i><span data-i18n="scan.filterBw">Trắng đen</span>
+              </label>
+              <label class="scan-filter-chip shrink-0 px-3 py-2 rounded-xl border-2 border-slate-200 bg-white text-edu-text cursor-pointer transition" data-filter="enhance">
+                <input type="radio" name="scan-filter" value="enhance" class="hidden">
+                <i class="fa-solid fa-sun mr-1"></i><span data-i18n="scan.filterEnhance">Tăng sáng</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <span class="text-xs font-black uppercase tracking-wider text-edu-teal/80">
+              <i class="fa-solid fa-images text-edu-green mr-1"></i>
+              <span data-i18n="scan.pagesLabel">Trang đã chụp:</span>
+              <b id="scan-count" class="text-edu-teal ml-1">0</b>
+            </span>
+            <button id="scan-clear-btn" class="px-3 py-1.5 rounded-xl bg-edu-red/10 hover:bg-edu-red/20 text-edu-red text-xs font-bold border border-edu-red/30 transition disabled:opacity-40" disabled>
+              <i class="fa-solid fa-trash-can mr-1"></i><span data-i18n="common.clearAll">Xóa hết</span>
+            </button>
+          </div>
+
+          <div id="scan-pages-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 min-h-[100px] max-h-[240px] overflow-y-auto"></div>
+
+          <div class="space-y-3 pt-2 border-t border-slate-100">
+            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+              <span class="text-edu-teal" data-i18n="scan.layout">Khổ PDF:</span>
+              <select id="scan-layout" class="bg-white text-edu-teal font-bold px-2 py-1.5 rounded-xl border-2 border-edu-green/40 focus:outline-none">
+                <option value="portrait" data-i18n="merge.portrait">A4 Dọc (Portrait)</option>
+                <option value="landscape" data-i18n="merge.landscape">A4 Ngang (Landscape)</option>
+              </select>
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <input type="text" id="scan-out-filename" value="Scan_tai_lieu" placeholder="Scan_tai_lieu" class="flex-1 px-3 py-2.5 text-xs sm:text-sm bg-slate-50 border-2 border-edu-green/40 rounded-xl focus:outline-none focus:border-edu-teal font-bold text-edu-teal">
+              <button id="scan-export-btn" disabled class="px-5 py-3 rounded-2xl bg-edu-teal hover:bg-edu-text text-white text-xs sm:text-sm font-extrabold shadow-edu-md transition active:scale-95 flex items-center justify-center gap-2 disabled:opacity-45">
+                <i class="fa-solid fa-file-pdf text-edu-yellow"></i>
+                <span data-i18n="scan.export">Xuất PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-edu-cream/70 border-2 border-edu-yellow rounded-2xl px-3 py-2.5 text-[11px] sm:text-xs text-edu-teal font-medium flex items-start gap-2">
+        <i class="fa-solid fa-lightbulb text-edu-green text-sm mt-0.5 shrink-0"></i>
+        <span data-i18n="scan.tip"><b>Mẹo mobile:</b> Đặt giấy trên nền tối, đủ sáng. Kéo 4 nút vàng vào đúng góc tờ giấy (hoặc bấm «Tự phát hiện»). Chọn bộ lọc «Tự động» để chữ rõ hơn. Có thể thêm ảnh từ thư viện. Sắp xếp bằng kéo thả rồi xuất PDF.</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Lightbox Modal -->
+  <div id="lightbox-modal" class="fixed inset-0 z-50 bg-edu-teal/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-edu-lg overflow-hidden border-2 border-edu-green animate-in fade-in duration-200">
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-edu-tint">
+        <div class="flex items-center gap-2.5 truncate">
+          <span class="w-3 h-3 rounded-full bg-edu-yellow border border-edu-green"></span>
+          <h4 id="lightbox-title" class="font-extrabold text-edu-teal text-sm sm:text-base truncate">Xem chi tiết trang</h4>
+        </div>
+        <button id="lightbox-close-btn" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-edu-red hover:bg-rose-50 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-auto flex-1 flex items-center justify-center bg-slate-100 min-h-[350px]">
+        <img id="lightbox-img" src="" alt="Trang phóng to" class="max-w-full max-h-[72vh] object-contain rounded-xl shadow-md bg-white">
+      </div>
+
+      <div class="p-3.5 border-t border-slate-100 bg-white flex items-center justify-between">
+        <span id="lightbox-info" class="text-xs font-semibold text-edu-teal/70">Độ phân giải hiển thị tối ưu</span>
+        <div class="flex items-center gap-2">
+          <a id="lightbox-single-download" href="#" download="trang.png" class="hidden px-4 py-1.5 rounded-xl bg-edu-green hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-download"></i> Tải ảnh này
+          </a>
+          <button id="lightbox-confirm-btn" class="px-5 py-1.5 rounded-xl bg-edu-teal hover:bg-edu-text text-white text-xs font-bold transition" data-i18n="common.close">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="edu-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none bg-edu-teal text-white text-xs sm:text-sm px-5 py-3.5 rounded-2xl shadow-edu-lg flex items-center gap-3 border-2 border-edu-yellow">
+    <span id="edu-toast-icon" class="text-edu-yellow text-lg"><i class="fa-solid fa-circle-check"></i></span>
+    <span id="edu-toast-msg" class="font-bold">Thao tác thành công!</span>
+  </div>
+
+  <div id="docx-render-stage"></div>
+
+  <script>
+    /* =========================================================================
+       1. CÔNG CỤ CHUẨN HÓA TÊN FILE AN TOÀN TUYỆT ĐỐI CHO WINRAR & WINDOWS
+       ========================================================================= */
+    function sanitizeForZipFilename(rawName, fallback = 'Tai_lieu') {
+      if (!rawName) return fallback;
+      let str = rawName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      str = str.replace(/[đĐ]/g, 'd');
+      str = str.replace(/[\\/:\*\?"<>\|\r\n\t]/g, '_');
+      str = str.replace(/\s+/g, '_');
+      str = str.replace(/_+/g, '_');
+      if (str.length > 60) str = str.substring(0, 60);
+      str = str.replace(/^[_\.]+|[_\.]+$/g, '');
+      return str || fallback;
+    }
+
+    /* =========================================================================
+       2. BỘ TẠO ZIP DỰ PHÒNG CHUẨN PKWARE (100% TƯƠNG THÍCH WINRAR / 7-ZIP)
+       ========================================================================= */
+    class RobustPureZipWriter {
+      constructor() { this.entries = []; }
+      static makeCrcTable() {
+        let c; const table = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+          c = n;
+          for (let k = 0; k < 8; k++) c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+          table[n] = c >>> 0;
+        }
+        return table;
+      }
+      static getCrc32(uint8) {
+        if (!RobustPureZipWriter.crcTable) RobustPureZipWriter.crcTable = RobustPureZipWriter.makeCrcTable();
+        const table = RobustPureZipWriter.crcTable;
+        let crc = 0 ^ (-1);
+        for (let i = 0; i < uint8.length; i++) crc = (crc >>> 8) ^ table[(crc ^ uint8[i]) & 0xFF];
+        return (crc ^ (-1)) >>> 0;
+      }
+      static getDosDateTime() {
+        const d = new Date();
+        const dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+        const dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+        return { dosDate, dosTime };
+      }
+      addFile(filename, uint8Data) {
+        const cleanName = filename.replace(/^[\\\/]+/, '').replace(/[\\\/]+/g, '_');
+        const nameBytes = new TextEncoder().encode(cleanName);
+        const crc = RobustPureZipWriter.getCrc32(uint8Data);
+        this.entries.push({ name: cleanName, nameBytes, data: uint8Data, crc, size: uint8Data.length });
+      }
+      generateBlob() {
+        const parts = []; let offset = 0; const centralEntries = [];
+        const { dosDate, dosTime } = RobustPureZipWriter.getDosDateTime();
+        for (const entry of this.entries) {
+          const localHeader = new Uint8Array(30 + entry.nameBytes.length);
+          const view = new DataView(localHeader.buffer);
+          view.setUint32(0, 0x04034b50, true);
+          view.setUint16(4, 20, true);
+          view.setUint16(6, 0x0800, true);
+          view.setUint16(8, 0, true);
+          view.setUint16(10, dosTime, true);
+          view.setUint16(12, dosDate, true);
+          view.setUint32(14, entry.crc, true);
+          view.setUint32(18, entry.size, true);
+          view.setUint32(22, entry.size, true);
+          view.setUint16(26, entry.nameBytes.length, true);
+          view.setUint16(28, 0, true);
+          localHeader.set(entry.nameBytes, 30);
+          centralEntries.push({ entry, offset });
+          parts.push(localHeader); parts.push(entry.data);
+          offset += localHeader.length + entry.data.length;
+        }
+        const cdStartOffset = offset; let cdLength = 0;
+        for (const cent of centralEntries) {
+          const cdHeader = new Uint8Array(46 + cent.entry.nameBytes.length);
+          const view = new DataView(cdHeader.buffer);
+          view.setUint32(0, 0x02014b50, true);
+          view.setUint16(4, 20, true);
+          view.setUint16(6, 20, true);
+          view.setUint16(8, 0x0800, true);
+          view.setUint16(10, 0, true);
+          view.setUint16(12, dosTime, true);
+          view.setUint16(14, dosDate, true);
+          view.setUint32(16, cent.entry.crc, true);
+          view.setUint32(20, cent.entry.size, true);
+          view.setUint32(24, cent.entry.size, true);
+          view.setUint16(28, cent.entry.nameBytes.length, true);
+          view.setUint16(30, 0, true);
+          view.setUint16(32, 0, true);
+          view.setUint16(34, 0, true);
+          view.setUint16(36, 0, true);
+          view.setUint32(38, 0, true);
+          view.setUint32(42, cent.offset, true);
+          cdHeader.set(cent.entry.nameBytes, 46);
+          parts.push(cdHeader);
+          offset += cdHeader.length; cdLength += cdHeader.length;
+        }
+        const eocd = new Uint8Array(22);
+        const eocdView = new DataView(eocd.buffer);
+        eocdView.setUint32(0, 0x06054b50, true);
+        eocdView.setUint16(4, 0, true); eocdView.setUint16(6, 0, true);
+        eocdView.setUint16(8, this.entries.length, true);
+        eocdView.setUint16(10, this.entries.length, true);
+        eocdView.setUint32(12, cdLength, true);
+        eocdView.setUint32(16, cdStartOffset, true);
+        eocdView.setUint16(20, 0, true);
+        parts.push(eocd);
+        return new Blob(parts, { type: 'application/zip' });
+      }
+    }
+
+    async function ensureJSZipInstance() {
+      if (window.JSZip) return window.JSZip;
+      const cdnList = [
+        'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+        'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
+      ];
+      for (const src of cdnList) {
+        try {
+          await new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = src; s.onload = res; s.onerror = rej;
+            document.head.appendChild(s);
+          });
+          if (window.JSZip) return window.JSZip;
+        } catch (_) {}
+      }
+      return null;
+    }
+
+    async function createSafeZipBlob(fileEntries) {
+      const jszip = await ensureJSZipInstance();
+      if (jszip) {
+        const zip = new jszip();
+        for (const item of fileEntries) zip.file(item.name, item.data);
+        return await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+      }
+      const fallbackZip = new RobustPureZipWriter();
+      for (const item of fileEntries) {
+        let uint8 = item.data;
+        if (item.data instanceof Blob) {
+          const buf = await item.data.arrayBuffer();
+          uint8 = new Uint8Array(buf);
+        }
+        fallbackZip.addFile(item.name, uint8);
+      }
+      return fallbackZip.generateBlob();
+    }
+
+    /* =========================================================================
+       3. ĐỘNG CƠ SINH PDF NỘI BỘ (CHUẨN KÍCH THƯỚC A4 DỌC/NGANG)
+       ========================================================================= */
+    class NativePurePdfGenerator {
+      static createFromPages(pagesData, layoutMode = 'fit') {
+        const objects = [];
+        const offsets = [];
+
+        function addObject(headerStr, streamBytes = null) {
+          const id = objects.length + 1;
+          objects.push({ id, header: headerStr, stream: streamBytes });
+          return id;
+        }
+
+        const catalogId = 1;
+        const pagesRootId = 2;
+        const pageCount = pagesData.length;
+        const pageObjectIds = [];
+
+        for (let i = 0; i < pageCount; i++) {
+          pageObjectIds.push(3 + i * 3);
+        }
+
+        addObject(`<< /Type /Catalog /Pages ${pagesRootId} 0 R >>`);
+        addObject(`<< /Type /Pages /Kids [ ${pageObjectIds.map(id => `${id} 0 R`).join(' ')} ] /Count ${pageCount} >>`);
+
+        const A4_PORTRAIT_W = 595.28;
+        const A4_PORTRAIT_H = 841.89;
+        const A4_LANDSCAPE_W = 841.89;
+        const A4_LANDSCAPE_H = 595.28;
+
+        for (let i = 0; i < pageCount; i++) {
+          const p = pagesData[i];
+          const imgObjId = 4 + i * 3;
+          const streamObjId = 5 + i * 3;
+
+          let targetW = p.widthPt;
+          let targetH = p.heightPt;
+
+          if (layoutMode === 'portrait') {
+            targetW = A4_PORTRAIT_W;
+            targetH = A4_PORTRAIT_H;
+          } else if (layoutMode === 'landscape') {
+            targetW = A4_LANDSCAPE_W;
+            targetH = A4_LANDSCAPE_H;
+          } else {
+            if (p.widthPt > p.heightPt) {
+              targetW = A4_LANDSCAPE_W;
+              targetH = A4_LANDSCAPE_H;
+            } else {
+              targetW = A4_PORTRAIT_W;
+              targetH = A4_PORTRAIT_H;
+            }
+          }
+
+          addObject(`<< /Type /Page /Parent ${pagesRootId} 0 R /MediaBox [0 0 ${targetW.toFixed(2)} ${targetH.toFixed(2)}] /Resources << /XObject << /Im0 ${imgObjId} 0 R >> >> /Contents ${streamObjId} 0 R >>`);
+          const imgHeader = `<< /Type /XObject /Subtype /Image /Width ${p.pixelWidth} /Height ${p.pixelHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${p.jpegBytes.length} >>`;
+          addObject(imgHeader, p.jpegBytes);
+
+          const imgRatio = p.pixelWidth / p.pixelHeight;
+          const pageRatio = targetW / targetH;
+          let drawW = targetW;
+          let drawH = targetH;
+          let drawX = 0;
+          let drawY = 0;
+
+          if (imgRatio > pageRatio) {
+            drawH = targetW / imgRatio;
+            drawY = (targetH - drawH) / 2;
+          } else {
+            drawW = targetH * imgRatio;
+            drawX = (targetW - drawW) / 2;
+          }
+
+          const contentCmd = `q\n${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${drawX.toFixed(2)} ${drawY.toFixed(2)} cm\n/Im0 Do\nQ\n`;
+          const contentBytes = new TextEncoder().encode(contentCmd);
+          addObject(`<< /Length ${contentBytes.length} >>`, contentBytes);
+        }
+
+        const chunks = [];
+        let currentOffset = 0;
+        function writeString(str) {
+          const bytes = new TextEncoder().encode(str);
+          chunks.push(bytes); currentOffset += bytes.length;
+        }
+        function writeChunk(uint8) {
+          chunks.push(uint8); currentOffset += uint8.length;
+        }
+
+        writeString('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+        for (let i = 0; i < objects.length; i++) {
+          offsets.push(currentOffset);
+          const obj = objects[i];
+          writeString(`${obj.id} 0 obj\n${obj.header}\n`);
+          if (obj.stream) {
+            writeString('stream\n');
+            writeChunk(obj.stream);
+            writeString('\nendstream\n');
+          }
+          writeString('endobj\n');
+        }
+
+        const startXref = currentOffset;
+        writeString(`xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`);
+        for (let i = 0; i < offsets.length; i++) {
+          writeString(`${offsets[i].toString().padStart(10, '0')} 00000 n \n`);
+        }
+        writeString(`trailer\n<< /Size ${objects.length + 1} /Root ${catalogId} 0 R >>\nstartxref\n${startXref}\n%%EOF\n`);
+
+        let totalSize = 0;
+        chunks.forEach(c => totalSize += c.length);
+        const finalPdf = new Uint8Array(totalSize);
+        let ptr = 0;
+        for (let i = 0; i < chunks.length; i++) {
+          finalPdf.set(chunks[i], ptr); ptr += chunks[i].length;
+        }
+        return finalPdf;
+      }
+    }
+
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    /* =========================================================================
+       I18N — Tiếng Việt / English
+       ========================================================================= */
+    const I18N = {
+      vi: {
+        'header.subtitle': 'Trợ Lý Xử Lý PDF & Văn Bản Chuẩn Xác · WinRAR Tương Thích 100%',
+        'header.status': 'Chế độ xử lý an toàn & Tỷ lệ 1:1 sẵn sàng',
+        'nav.convert': '1. Chuyển Word/PDF → Ảnh',
+        'nav.merge': '2. Ghép Nối PDF & Ảnh',
+        'nav.compress': '3. Nén File PDF',
+        'nav.split': '4. Tách File PDF Đa Năng',
+        'nav.watermark': '5. Đóng Dấu Watermark',
+        'nav.scan': '6. Scan Camera → PDF',
+        'scan.title': 'Scan tài liệu bằng camera',
+        'scan.desc': 'Chụp từng trang → căn 4 góc → lọc nét → xuất PDF A4 (tối ưu điện thoại).',
+        'scan.start': 'Bật camera',
+        'scan.stop': 'Tắt camera',
+        'scan.switch': 'Đổi camera',
+        'scan.placeholder': 'Bấm «Bật camera» và cho phép trình duyệt truy cập camera',
+        'scan.httpsHint': 'Cần HTTPS hoặc localhost để dùng camera',
+        'scan.capture': 'Chụp trang',
+        'scan.pagesLabel': 'Trang đã chụp:',
+        'scan.layout': 'Khổ PDF:',
+        'scan.export': 'Xuất PDF',
+        'scan.resetCorners': 'Đặt lại 4 góc',
+        'scan.tip': '<b>Mẹo mobile:</b> Đặt giấy trên nền tối, đủ sáng. Kéo 4 nút vàng vào đúng góc (hoặc «Tự phát hiện»). Chọn bộ lọc «Tự động» để chữ rõ hơn. Có thể thêm ảnh từ thư viện.',
+        'scan.flash': 'Flash',
+        'scan.import': 'Thêm ảnh',
+        'scan.autoDetect': 'Tự phát hiện',
+        'scan.filterLabel': 'Bộ lọc (áp dụng khi chụp):',
+        'scan.filterAuto': 'Tự động',
+        'scan.filterOrig': 'Gốc',
+        'scan.filterGray': 'Xám',
+        'scan.filterBw': 'Trắng đen',
+        'scan.filterEnhance': 'Tăng sáng',
+        'wm.title': 'Kéo thả file PDF cần đóng dấu',
+        'wm.desc': 'Thêm chữ watermark chéo hoặc ngang lên mọi trang — phù hợp tài liệu học tập, đề thi, biên bản.',
+        'wm.browse': 'Chọn Tệp PDF',
+        'wm.textLabel': 'Nội dung đóng dấu',
+        'wm.opacityLabel': 'Độ mờ (%)',
+        'wm.angleLabel': 'Góc nghiêng',
+        'wm.angleDiag': 'Chéo -45°',
+        'wm.angleHoriz': 'Ngang 0°',
+        'wm.colorLabel': 'Màu chữ',
+        'wm.colorGray': 'Xám',
+        'wm.colorRed': 'Đỏ',
+        'wm.colorTeal': 'Xanh teal',
+        'wm.colorBlue': 'Xanh dương',
+        'wm.outName': 'Tên file kết quả:',
+        'wm.execute': 'Đóng Dấu & Tải PDF',
+        'rot.title': 'Kéo thả file PDF cần xoay trang',
+        'rot.desc': 'Xoay toàn bộ trang PDF theo 90°, 180° hoặc 270° — hữu ích khi scan bị lệch hướng.',
+        'rot.browse': 'Chọn Tệp PDF',
+        'rot.angleLabel': 'Góc xoay toàn bộ trang',
+        'rot.cw': 'Theo chiều kim đồng hồ',
+        'rot.half': 'Lật ngược',
+        'rot.ccw': 'Ngược kim đồng hồ',
+        'rot.outName': 'Tên file kết quả:',
+        'rot.execute': 'Xoay & Tải PDF',
+        'txt.title': 'Kéo thả file PDF để trích xuất chữ',
+        'txt.desc': 'Lấy toàn bộ văn bản từ PDF (file có lớp chữ). Xem trước, sao chép hoặc tải file .TXT.',
+        'txt.browse': 'Chọn Tệp PDF',
+        'txt.chars': 'Ký tự:',
+        'txt.copy': 'Sao chép',
+        'txt.download': 'Tải .TXT',
+        'convert.title': 'Kéo thả file Word (.docx) hoặc PDF vào đây',
+        'convert.desc': 'Tự động kết xuất từng trang thành hình ảnh sắc nét. Tùy chọn DPI, xem trước và tải trọn gói file ZIP không bao giờ bị lỗi giải nén trên WinRAR/Windows.',
+        'convert.format': 'Định dạng:',
+        'convert.opt.png': 'PNG (Chuẩn nét nhất)',
+        'convert.opt.jpeg': 'JPEG (Dung lượng nhẹ)',
+        'convert.dpi': 'Độ sắc nét (DPI):',
+        'convert.opt.1.5': 'Chuẩn 1.5x (Màn hình)',
+        'convert.opt.2.0': 'Sắc nét cao 2.0x (Khuyên dùng)',
+        'convert.opt.2.5': 'Siêu sắc nét 2.5x (In ấn)',
+        'convert.browse': 'Chọn tệp tin',
+        'convert.downloadZip': 'Tải Toàn Bộ (ZIP)',
+        'merge.title': 'Kéo thả nhiều file PDF & Ảnh (JPG, PNG, WEBP)',
+        'merge.desc': 'Tự do kéo thả sắp xếp thứ tự, chọn chuẩn khổ giấy đầu ra A4 dọc hoặc ngang, xoay góc và ghép thành 1 file PDF hoàn chỉnh.',
+        'merge.addFiles': 'Thêm Tệp Từ Thiết Bị (Chọn nhiều tệp)',
+        'merge.selected': 'Đã chọn:',
+        'merge.layout': 'Khổ đầu ra:',
+        'merge.portrait': 'A4 Dọc (Portrait)',
+        'merge.landscape': 'A4 Ngang (Landscape)',
+        'merge.fit': 'Tự động theo trang gốc (Fit)',
+        'merge.export': 'Ghép & Tải PDF Ngay',
+        'merge.tip': '<b>Mẹo:</b> <b>Click chuột trái giữ và kéo</b> trực tiếp lên thẻ trang để di chuyển đến vị trí mong muốn. Cũng có thể dùng nút mũi tên <b>← →</b> hoặc biểu tượng kéo. Chọn khổ A4 dọc/ngang trước khi xuất file.',
+        'compress.title': 'Kéo thả file PDF cần nén dung lượng',
+        'compress.desc': 'Giảm dung lượng thông minh với thuật toán cân bằng chất lượng tối ưu. Chọn Mức 1→8: scale + JPEG được tinh chỉnh để giữ nét chữ/ảnh tốt nhất có thể ở từng mức.',
+        'compress.browse': 'Chọn Tệp PDF Cần Nén',
+        'compress.levelLabel': 'Chọn mức nén (1 = giữ nét nhất · 8 = nhỏ nhất):',
+        'compress.lv1': 'Mức 1', 'compress.lv1d': 'Siêu nét',
+        'compress.lv2': 'Mức 2', 'compress.lv2d': 'Nét cao',
+        'compress.lv3': 'Mức 3', 'compress.lv3d': 'Chuẩn+',
+        'compress.lv4': 'Mức 4', 'compress.lv4d': 'Khuyên dùng',
+        'compress.lv5': 'Mức 5', 'compress.lv5d': 'Thu gọn',
+        'compress.lv6': 'Mức 6', 'compress.lv6d': 'Nhẹ',
+        'compress.lv7': 'Mức 7', 'compress.lv7d': 'Rất nhỏ',
+        'compress.lv8': 'Mức 8', 'compress.lv8d': 'Cực nhỏ',
+        'compress.selectedLevel': 'Mức đang chọn:',
+        'compress.estLabel': 'Ước tính sau nén:',
+        'compress.estHint': 'Chọn mức để xem dung lượng dự kiến',
+        'compress.outName': 'Tên file sau nén:',
+        'compress.execute': 'Tiến Hành Nén PDF Ngay',
+        'split.title': 'Kéo thả file PDF cần phân tách',
+        'split.desc': 'Tách từng trang lẻ nén ZIP, chia theo dải chương mục (vd: 1-3, 4, 5-8), hoặc tích chọn trực quan xuất file chuẩn tỷ lệ 1:1 không lỗi nét.',
+        'split.browse': 'Chọn Tệp PDF',
+        'split.modeLabel': 'Chọn Chế Độ Tách File:',
+        'split.ratioBadge': 'Bảo toàn tỷ lệ 1:1 chuẩn xác',
+        'split.modeAll': 'Tách từng trang lẻ (ZIP)',
+        'split.modeRanges': 'Tách theo dải trang (Range)',
+        'split.modeVisual': 'Tích chọn trang trực quan',
+        'split.outName': 'Tên file kết quả:',
+        'split.execute': 'Bắt đầu Tách & Tải Về',
+        'common.changeFile': 'Chọn file khác',
+        'common.selectAll': 'Chọn tất cả',
+        'common.deselect': 'Bỏ chọn',
+        'common.clearAll': 'Xóa hết',
+        'common.pages': 'trang',
+        'common.close': 'Đóng',
+        'level.ultra': 'Siêu nét', 'level.high': 'Nét cao', 'level.std': 'Chuẩn+', 'level.rec': 'Khuyên dùng',
+        'level.compact': 'Thu gọn', 'level.light': 'Nhẹ', 'level.tiny': 'Rất nhỏ', 'level.min': 'Cực nhỏ'
+      },
+      en: {
+        'header.subtitle': 'Accurate PDF & Document Assistant · 100% WinRAR Compatible',
+        'header.status': 'Safe local processing & 1:1 ratio ready',
+        'nav.convert': '1. Word/PDF → Images',
+        'nav.merge': '2. Merge PDF & Images',
+        'nav.compress': '3. Compress PDF',
+        'nav.split': '4. Split PDF',
+        'nav.watermark': '5. Watermark',
+        'nav.scan': '6. Scan Camera → PDF',
+        'scan.title': 'Scan documents with camera',
+        'scan.desc': 'Capture each page → adjust corners → enhance → export A4 PDF (mobile-optimized).',
+        'scan.start': 'Start camera',
+        'scan.stop': 'Stop camera',
+        'scan.switch': 'Switch camera',
+        'scan.placeholder': 'Tap «Start camera» and allow browser access',
+        'scan.httpsHint': 'Requires HTTPS or localhost for camera access',
+        'scan.capture': 'Capture page',
+        'scan.pagesLabel': 'Captured pages:',
+        'scan.layout': 'PDF size:',
+        'scan.export': 'Export PDF',
+        'scan.resetCorners': 'Reset corners',
+        'scan.tip': '<b>Mobile tip:</b> Place paper on a dark surface with good light. Drag 4 yellow handles (or Auto-detect). Use Auto filter for clearer text. You can also import photos.',
+        'scan.flash': 'Flash',
+        'scan.import': 'Add photos',
+        'scan.autoDetect': 'Auto-detect',
+        'scan.filterLabel': 'Filter (applied on capture):',
+        'scan.filterAuto': 'Auto',
+        'scan.filterOrig': 'Original',
+        'scan.filterGray': 'Grayscale',
+        'scan.filterBw': 'B&W',
+        'scan.filterEnhance': 'Brighten',
+        'wm.title': 'Drop a PDF to add watermark',
+        'wm.desc': 'Add diagonal or horizontal text watermark on every page — ideal for study materials and exam papers.',
+        'wm.browse': 'Choose PDF',
+        'wm.textLabel': 'Watermark text',
+        'wm.opacityLabel': 'Opacity (%)',
+        'wm.angleLabel': 'Angle',
+        'wm.angleDiag': 'Diagonal -45°',
+        'wm.angleHoriz': 'Horizontal 0°',
+        'wm.colorLabel': 'Text color',
+        'wm.colorGray': 'Gray',
+        'wm.colorRed': 'Red',
+        'wm.colorTeal': 'Teal',
+        'wm.colorBlue': 'Blue',
+        'wm.outName': 'Output filename:',
+        'wm.execute': 'Stamp & Download PDF',
+        'rot.title': 'Drop a PDF to rotate pages',
+        'rot.desc': 'Rotate all PDF pages by 90°, 180° or 270° — useful when scans are sideways.',
+        'rot.browse': 'Choose PDF',
+        'rot.angleLabel': 'Rotation for all pages',
+        'rot.cw': 'Clockwise',
+        'rot.half': 'Upside down',
+        'rot.ccw': 'Counter-clockwise',
+        'rot.outName': 'Output filename:',
+        'rot.execute': 'Rotate & Download PDF',
+        'txt.title': 'Drop a PDF to extract text',
+        'txt.desc': 'Pull all text from a PDF (with a text layer). Preview, copy, or download as .TXT.',
+        'txt.browse': 'Choose PDF',
+        'txt.chars': 'Characters:',
+        'txt.copy': 'Copy',
+        'txt.download': 'Download .TXT',
+        'convert.title': 'Drop Word (.docx) or PDF files here',
+        'convert.desc': 'Automatically export each page as a sharp image. Choose DPI, preview, and download a ZIP package that never fails to extract on WinRAR/Windows.',
+        'convert.format': 'Format:',
+        'convert.opt.png': 'PNG (Sharpest)',
+        'convert.opt.jpeg': 'JPEG (Smaller size)',
+        'convert.dpi': 'Sharpness (DPI):',
+        'convert.opt.1.5': 'Standard 1.5x (Screen)',
+        'convert.opt.2.0': 'High 2.0x (Recommended)',
+        'convert.opt.2.5': 'Ultra 2.5x (Print)',
+        'convert.browse': 'Choose file',
+        'convert.downloadZip': 'Download All (ZIP)',
+        'merge.title': 'Drop multiple PDF & Images (JPG, PNG, WEBP)',
+        'merge.desc': 'Freely drag to reorder, choose A4 portrait or landscape output, rotate pages, and merge into one complete PDF.',
+        'merge.addFiles': 'Add files from device (multiple)',
+        'merge.selected': 'Selected:',
+        'merge.layout': 'Output size:',
+        'merge.portrait': 'A4 Portrait',
+        'merge.landscape': 'A4 Landscape',
+        'merge.fit': 'Auto fit original page',
+        'merge.export': 'Merge & Download PDF',
+        'merge.tip': '<b>Tip:</b> <b>Left-click, hold and drag</b> any page card to move it. You can also use the arrow buttons <b>← →</b> or the grip icon. Choose A4 portrait/landscape before exporting.',
+        'compress.title': 'Drop a PDF to compress',
+        'compress.desc': 'Smart size reduction with quality-balanced encoding. Choose Level 1→8: scale + JPEG tuned to keep text/images as sharp as possible at each level.',
+        'compress.browse': 'Choose PDF to compress',
+        'compress.levelLabel': 'Compression level (1 = sharpest · 8 = smallest):',
+        'compress.lv1': 'Level 1', 'compress.lv1d': 'Ultra sharp',
+        'compress.lv2': 'Level 2', 'compress.lv2d': 'High quality',
+        'compress.lv3': 'Level 3', 'compress.lv3d': 'Standard+',
+        'compress.lv4': 'Level 4', 'compress.lv4d': 'Recommended',
+        'compress.lv5': 'Level 5', 'compress.lv5d': 'Compact',
+        'compress.lv6': 'Level 6', 'compress.lv6d': 'Light',
+        'compress.lv7': 'Level 7', 'compress.lv7d': 'Very small',
+        'compress.lv8': 'Level 8', 'compress.lv8d': 'Minimal',
+        'compress.selectedLevel': 'Selected level:',
+        'compress.estLabel': 'Estimated size:',
+        'compress.estHint': 'Select a level to see estimated size',
+        'compress.outName': 'Output filename:',
+        'compress.execute': 'Compress PDF Now',
+        'split.title': 'Drop a PDF to split',
+        'split.desc': 'Split into single pages (ZIP), custom page ranges (e.g. 1-3, 4, 5-8), or visually select pages — always 1:1 quality.',
+        'split.browse': 'Choose PDF',
+        'split.modeLabel': 'Choose split mode:',
+        'split.ratioBadge': 'Preserves exact 1:1 ratio',
+        'split.modeAll': 'Split every page (ZIP)',
+        'split.modeRanges': 'Split by page ranges',
+        'split.modeVisual': 'Visual page selection',
+        'split.outName': 'Output name:',
+        'split.execute': 'Start Split & Download',
+        'common.changeFile': 'Choose another file',
+        'common.selectAll': 'Select all',
+        'common.deselect': 'Deselect',
+        'common.clearAll': 'Clear all',
+        'common.pages': 'pages',
+        'common.close': 'Close',
+        'level.ultra': 'Ultra sharp', 'level.high': 'High quality', 'level.std': 'Standard+', 'level.rec': 'Recommended',
+        'level.compact': 'Compact', 'level.light': 'Light', 'level.tiny': 'Very small', 'level.min': 'Minimal'
+      }
+    };
+
+    let currentLang = localStorage.getItem('edudoc_lang') || 'vi';
+
+    function t(key, fallback) {
+      const dict = I18N[currentLang] || I18N.vi;
+      return (dict && dict[key]) || (I18N.vi && I18N.vi[key]) || fallback || key;
+    }
+
+    function applyLanguage(lang) {
+      currentLang = (lang === 'en') ? 'en' : 'vi';
+      try { localStorage.setItem('edudoc_lang', currentLang); } catch (_) {}
+      document.documentElement.lang = currentLang === 'en' ? 'en' : 'vi';
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const text = t(key);
+        if (el.tagName === 'OPTION') {
+          el.textContent = text;
+        } else if (/<[a-z][\s\S]*>/i.test(text)) {
+          el.innerHTML = text;
+        } else {
+          el.textContent = text;
+        }
+      });
+
+      const btnVi = document.getElementById('lang-btn-vi');
+      const btnEn = document.getElementById('lang-btn-en');
+      if (btnVi && btnEn) {
+        if (currentLang === 'vi') {
+          btnVi.className = 'lang-btn px-2.5 py-1.5 rounded-xl transition bg-edu-yellow text-edu-teal shadow-sm';
+          btnEn.className = 'lang-btn px-2.5 py-1.5 rounded-xl transition text-white/90 hover:bg-white/10';
+        } else {
+          btnEn.className = 'lang-btn px-2.5 py-1.5 rounded-xl transition bg-edu-yellow text-edu-teal shadow-sm';
+          btnVi.className = 'lang-btn px-2.5 py-1.5 rounded-xl transition text-white/90 hover:bg-white/10';
+        }
+      }
+
+      if (typeof COMPRESS_PRESETS !== 'undefined' && COMPRESS_PRESETS[1]) {
+        COMPRESS_PRESETS[1].label = t('level.ultra');
+        COMPRESS_PRESETS[2].label = t('level.high');
+        COMPRESS_PRESETS[3].label = t('level.std');
+        COMPRESS_PRESETS[4].label = t('level.rec');
+        COMPRESS_PRESETS[5].label = t('level.compact');
+        COMPRESS_PRESETS[6].label = t('level.light');
+        COMPRESS_PRESETS[7].label = t('level.tiny');
+        COMPRESS_PRESETS[8].label = t('level.min');
+      }
+    }
+
+    document.getElementById('lang-btn-vi')?.addEventListener('click', () => applyLanguage('vi'));
+    document.getElementById('lang-btn-en')?.addEventListener('click', () => applyLanguage('en'));
+    setTimeout(() => applyLanguage(currentLang), 0);
+
+    const toast = document.getElementById('edu-toast');
+    const toastMsg = document.getElementById('edu-toast-msg');
+    const toastIcon = document.getElementById('edu-toast-icon');
+
+    function showToast(message, type = 'success') {
+      toastMsg.textContent = message;
+      if (type === 'error') {
+        toastIcon.className = 'text-edu-red text-lg';
+        toastIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+      } else {
+        toastIcon.className = 'text-edu-yellow text-lg';
+        toastIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+      }
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3500);
+    }
+
+    const globalProgressCard = document.getElementById('global-progress-card');
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressTitle = document.getElementById('progress-title');
+    const progressDesc = document.getElementById('progress-desc');
+
+    function setProgress(percent, title, desc) {
+      const p = Math.min(100, Math.max(0, percent));
+      progressBarFill.style.width = `${p}%`;
+      progressPercent.textContent = `${Math.round(p)}%`;
+      if (title) progressTitle.textContent = title;
+      if (desc) progressDesc.textContent = desc;
+    }
+
+    function showProgress(show = true) {
+      if (show) globalProgressCard.classList.remove('hidden');
+      else globalProgressCard.classList.add('hidden');
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+
+    // Modal Lightbox
+    const lightboxModal = document.getElementById('lightbox-modal');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxTitle = document.getElementById('lightbox-title');
+    const lightboxInfo = document.getElementById('lightbox-info');
+    const lightboxCloseBtn = document.getElementById('lightbox-close-btn');
+    const lightboxConfirmBtn = document.getElementById('lightbox-confirm-btn');
+    const lightboxSingleDownload = document.getElementById('lightbox-single-download');
+
+    function openLightbox(title, imgUrl, infoText = '', downloadUrl = null, downloadName = '') {
+      lightboxTitle.textContent = title;
+      lightboxImg.src = imgUrl;
+      lightboxInfo.textContent = infoText || 'Độ phân giải hiển thị chuẩn';
+      if (downloadUrl) {
+        lightboxSingleDownload.classList.remove('hidden');
+        lightboxSingleDownload.href = downloadUrl;
+        lightboxSingleDownload.download = downloadName || 'trang.png';
+      } else {
+        lightboxSingleDownload.classList.add('hidden');
+      }
+      lightboxModal.classList.remove('hidden');
+    }
+    function closeLightbox() { lightboxModal.classList.add('hidden'); lightboxImg.src = ''; }
+    lightboxCloseBtn.addEventListener('click', closeLightbox);
+    lightboxConfirmBtn.addEventListener('click', closeLightbox);
+    lightboxModal.addEventListener('click', (e) => { if (e.target === lightboxModal) closeLightbox(); });
+
+    // Switch Tabs Navigation
+    const navBtnConvert = document.getElementById('nav-btn-convert');
+    const navBtnMerge = document.getElementById('nav-btn-merge');
+    const navBtnCompress = document.getElementById('nav-btn-compress');
+    const navBtnSplit = document.getElementById('nav-btn-split');
+    const navBtnWatermark = document.getElementById('nav-btn-watermark');
+    const navBtnScan = document.getElementById('nav-btn-scan');
+
+    const moduleConvert = document.getElementById('module-convert');
+    const moduleMerge = document.getElementById('module-merge');
+    const moduleCompress = document.getElementById('module-compress');
+    const moduleSplit = document.getElementById('module-split');
+    const moduleWatermark = document.getElementById('module-watermark');
+    const moduleScan = document.getElementById('module-scan');
+
+    function switchModule(target) {
+      [navBtnConvert, navBtnMerge, navBtnCompress, navBtnSplit, navBtnWatermark, navBtnScan].forEach(btn => btn && btn.classList.remove('active'));
+      [moduleConvert, moduleMerge, moduleCompress, moduleSplit, moduleWatermark, moduleScan].forEach(mod => mod && mod.classList.add('hidden'));
+
+      if (target === 'convert') { navBtnConvert.classList.add('active'); moduleConvert.classList.remove('hidden'); }
+      else if (target === 'merge') { navBtnMerge.classList.add('active'); moduleMerge.classList.remove('hidden'); }
+      else if (target === 'compress') { navBtnCompress.classList.add('active'); moduleCompress.classList.remove('hidden'); }
+      else if (target === 'split') { navBtnSplit.classList.add('active'); moduleSplit.classList.remove('hidden'); }
+      else if (target === 'watermark') { navBtnWatermark.classList.add('active'); moduleWatermark.classList.remove('hidden'); }
+      else if (target === 'scan') { navBtnScan.classList.add('active'); moduleScan.classList.remove('hidden'); }
+      // Tắt camera khi rời module scan để tiết kiệm pin/quyền
+      if (target !== 'scan' && typeof stopScanCamera === 'function') {
+        try { stopScanCamera(); } catch (_) {}
+      }
+    }
+
+    navBtnConvert.addEventListener('click', () => switchModule('convert'));
+    navBtnMerge.addEventListener('click', () => switchModule('merge'));
+    navBtnCompress.addEventListener('click', () => switchModule('compress'));
+    navBtnSplit.addEventListener('click', () => switchModule('split'));
+    navBtnWatermark.addEventListener('click', () => switchModule('watermark'));
+    navBtnScan.addEventListener('click', () => switchModule('scan'));
+
+    /* =========================================================================
+       4. LOGIC MODULE 1: CONVERT WORD / PDF -> ẢNH
+       ========================================================================= */
+    const convertState = { file: null, rawFileName: '', safeFileName: '', pages: [] };
+    const convertUploadCard = document.getElementById('convert-upload-card');
+    const convertFileInput = document.getElementById('convert-file-input');
+    const convertBrowseBtn = document.getElementById('convert-browse-btn');
+    const convertFormatSelect = document.getElementById('convert-format');
+    const convertScaleSelect = document.getElementById('convert-scale');
+    const convertResultsCard = document.getElementById('convert-results-card');
+    const convertDocName = document.getElementById('convert-doc-name');
+    const convertDocMeta = document.getElementById('convert-doc-meta');
+    const convertPagesGrid = document.getElementById('convert-pages-grid');
+    const convertResetBtn = document.getElementById('convert-reset-btn');
+    const convertDownloadZipBtn = document.getElementById('convert-download-zip-btn');
+    const docxStage = document.getElementById('docx-render-stage');
+
+    convertUploadCard.addEventListener('click', () => convertFileInput.click());
+    convertBrowseBtn.addEventListener('click', (e) => { e.stopPropagation(); convertFileInput.click(); });
+    convertFileInput.addEventListener('change', (e) => { if (e.target.files && e.target.files[0]) processConvertFile(e.target.files[0]); convertFileInput.value = ''; });
+
+    async function processConvertFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['pdf', 'docx'].includes(ext)) { showToast('Vui lòng chọn file .PDF hoặc .DOCX!', 'error'); return; }
+      convertState.file = file;
+      convertState.rawFileName = file.name.replace(/\.[^/.]+$/, '');
+      convertState.safeFileName = sanitizeForZipFilename(convertState.rawFileName, 'Tai_lieu_anh');
+      convertState.pages = [];
+
+      showProgress(true); setProgress(5, 'Đang đọc tệp tin...', `Tệp: ${file.name}`);
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const mime = convertFormatSelect.value;
+        const imgExt = mime === 'image/jpeg' ? 'jpg' : 'png';
+        const scale = parseFloat(convertScaleSelect.value) || 2.0;
+
+        if (ext === 'pdf') {
+          setProgress(15, 'Đang phân tích cấu trúc PDF...', 'Khởi chạy bộ render PDF.js');
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const total = pdf.numPages;
+          for (let i = 1; i <= total; i++) {
+            const pct = 15 + ((i / total) * 80);
+            setProgress(pct, `Đang kết xuất trang ${i} / ${total}...`);
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width; canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            const blob = await new Promise(res => canvas.toBlob(res, mime, 0.94));
+            const buf = await blob.arrayBuffer();
+            convertState.pages.push({ pageNumber: i, dataUrl: canvas.toDataURL(mime, 0.94), uint8Array: new Uint8Array(buf), ext: imgExt, sizeKb: Math.round(buf.byteLength / 1024) });
+          }
+        } else if (ext === 'docx') {
+          setProgress(20, 'Đang kết xuất bố cục Word (.docx)...');
+          docxStage.innerHTML = '';
+          await docx.renderAsync(arrayBuffer, docxStage, null, { className: 'docx', inWrapper: true, breakPages: true });
+          const sections = docxStage.querySelectorAll('section.docx');
+          if (!sections || sections.length === 0) throw new Error('Không thể phân tích các trang từ tệp Word này.');
+          const total = sections.length;
+          for (let i = 0; i < total; i++) {
+            const pageNum = i + 1;
+            setProgress(20 + ((pageNum / total) * 75), `Đang chuyển đổi trang Word ${pageNum} / ${total}...`);
+            const canvas = await html2canvas(sections[i], { scale, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+            const blob = await new Promise(res => canvas.toBlob(res, mime, 0.94));
+            const buf = await blob.arrayBuffer();
+            convertState.pages.push({ pageNumber: pageNum, dataUrl: canvas.toDataURL(mime, 0.94), uint8Array: new Uint8Array(buf), ext: imgExt, sizeKb: Math.round(buf.byteLength / 1024) });
+          }
+          docxStage.innerHTML = '';
+        }
+
+        setProgress(100, 'Chuyển đổi hoàn tất!');
+        setTimeout(() => { showProgress(false); renderConvertResults(); showToast(`Đã xuất ${convertState.pages.length} trang ảnh thành công!`); }, 400);
+      } catch (err) {
+        showProgress(false); showToast('Lỗi: ' + err.message, 'error');
+      }
+    }
+
+    function renderConvertResults() {
+      convertDocName.textContent = convertState.file.name;
+      convertDocMeta.textContent = `Tổng cộng: ${convertState.pages.length} trang`;
+      convertPagesGrid.innerHTML = '';
+      convertState.pages.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'group bg-white rounded-2xl border-2 border-edu-green/30 hover:border-edu-green overflow-hidden shadow-edu-sm transition flex flex-col';
+        const pageFileName = `${convertState.safeFileName}_Trang_${p.pageNumber}.${p.ext}`;
+        card.innerHTML = `
+          <div class="relative bg-slate-100 aspect-[1/1.38] overflow-hidden cursor-pointer flex items-center justify-center p-2.5" onclick="openLightbox('Trang ${p.pageNumber}', '${p.dataUrl}', '${p.sizeKb} KB', '${p.dataUrl}', '${pageFileName}')">
+            <img src="${p.dataUrl}" alt="Trang ${p.pageNumber}" class="w-full h-full object-contain rounded drop-shadow-sm group-hover:scale-102 transition duration-200">
+            <div class="absolute inset-0 bg-edu-teal/20 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+              <span class="bg-edu-yellow text-edu-teal font-extrabold text-xs px-3 py-1.5 rounded-xl shadow-md border border-edu-green/40">Xem lớn</span>
+            </div>
+          </div>
+          <div class="p-3 bg-edu-tint border-t border-edu-green/20 flex items-center justify-between mt-auto">
+            <div>
+              <span class="text-xs font-black text-edu-teal">Trang ${p.pageNumber}</span>
+              <p class="text-[10px] text-edu-text/70">${p.sizeKb} KB</p>
+            </div>
+            <a href="${p.dataUrl}" download="${pageFileName}" class="w-8 h-8 rounded-xl bg-white hover:bg-edu-yellow text-edu-teal border border-edu-green/40 flex items-center justify-center shadow-sm transition"><i class="fa-solid fa-download text-xs"></i></a>
+          </div>
+        `;
+        convertPagesGrid.appendChild(card);
+      });
+      convertUploadCard.classList.add('hidden');
+      convertResultsCard.classList.remove('hidden');
+    }
+
+    convertResetBtn.addEventListener('click', () => { convertUploadCard.classList.remove('hidden'); convertResultsCard.classList.add('hidden'); convertState.file = null; convertState.pages = []; });
+    convertDownloadZipBtn.addEventListener('click', async () => {
+      if (!convertState.pages.length) return;
+      convertDownloadZipBtn.disabled = true; showProgress(true); setProgress(30, 'Đang đóng gói file ZIP...');
+      try {
+        const zipEntries = convertState.pages.map(p => ({ name: `${convertState.safeFileName}_Trang_${p.pageNumber}.${p.ext}`, data: p.uint8Array }));
+        const zipBlob = await createSafeZipBlob(zipEntries);
+        downloadBlob(zipBlob, `${convertState.safeFileName}_Trang_Anh.zip`);
+        setProgress(100, 'Đã hoàn tất!'); setTimeout(() => { showProgress(false); convertDownloadZipBtn.disabled = false; showToast('Đã tải ZIP thành công!'); }, 300);
+      } catch (err) { showProgress(false); convertDownloadZipBtn.disabled = false; showToast('Lỗi: ' + err.message, 'error'); }
+    });
+
+    /* =========================================================================
+       5. LOGIC MODULE 2: GHẾP PDF & ẢNH (A4 PORTRAIT/LANDSCAPE & REORDER)
+       ========================================================================= */
+    const mergeState = { items: [] };
+    const mergeDropZone = document.getElementById('merge-drop-zone');
+    const mergeFileInput = document.getElementById('merge-file-input');
+    const mergeWorkspace = document.getElementById('merge-workspace');
+    const mergePagesGrid = document.getElementById('merge-pages-grid');
+    const mergeStatSelected = document.getElementById('merge-stat-selected');
+    const mergeStatTotal = document.getElementById('merge-stat-total');
+    const mergeSelectAllBtn = document.getElementById('merge-select-all-btn');
+    const mergeDeselectAllBtn = document.getElementById('merge-deselect-all-btn');
+    const mergeClearAllBtn = document.getElementById('merge-clear-all-btn');
+    const mergeA4LayoutSelect = document.getElementById('merge-a4-layout');
+    const mergeFilenameInput = document.getElementById('merge-filename-input');
+    const mergeExportBtn = document.getElementById('merge-export-btn');
+
+    mergeDropZone.addEventListener('click', () => mergeFileInput.click());
+    mergeFileInput.addEventListener('change', (e) => { const files = Array.from(e.target.files || []); if (files.length) handleIncomingMergeFiles(files); mergeFileInput.value = ''; });
+
+    async function handleIncomingMergeFiles(files) {
+      const valid = files.filter(f => ['pdf', 'png', 'jpg', 'jpeg', 'webp'].includes(f.name.split('.').pop().toLowerCase()));
+      if (!valid.length) { showToast('Vui lòng chọn file PDF hoặc Ảnh hợp lệ!', 'error'); return; }
+
+      showProgress(true);
+      for (let i = 0; i < valid.length; i++) {
+        const f = valid[i]; const ext = f.name.split('.').pop().toLowerCase();
+        setProgress(10 + ((i / valid.length) * 85), `Đang xử lý: ${f.name}...`);
+        try {
+          const buf = await f.arrayBuffer();
+          if (ext === 'pdf') {
+            const pdfDoc = await pdfjsLib.getDocument({ data: buf.slice(0) }).promise;
+            for (let pNum = 1; pNum <= pdfDoc.numPages; pNum++) {
+              const page = await pdfDoc.getPage(pNum);
+              const viewport = page.getViewport({ scale: 1.2 });
+              const canvas = document.createElement('canvas');
+              canvas.width = viewport.width; canvas.height = viewport.height;
+              const ctx = canvas.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+              await page.render({ canvasContext: ctx, viewport }).promise;
+              mergeState.items.push({
+                id: 'm_' + Math.random().toString(36).substr(2, 9),
+                type: 'pdf', sourceName: f.name, displayPageNum: pNum, rotation: 0, selected: true,
+                thumbUrl: canvas.toDataURL('image/jpeg', 0.82), pdfJsPage: page,
+                widthPt: page.getViewport({ scale: 1.0 }).width, heightPt: page.getViewport({ scale: 1.0 }).height
+              });
+            }
+          } else {
+            const blob = new Blob([buf], { type: f.type });
+            const thumbUrl = URL.createObjectURL(blob);
+            const img = new Image(); await new Promise(res => { img.onload = res; img.src = thumbUrl; });
+            mergeState.items.push({
+              id: 'm_' + Math.random().toString(36).substr(2, 9),
+              type: 'image', sourceName: f.name, displayPageNum: 1, rotation: 0, selected: true,
+              thumbUrl: thumbUrl, widthPt: img.naturalWidth || 595, heightPt: img.naturalHeight || 842
+            });
+          }
+        } catch (err) { showToast(`Lỗi file ${f.name}: ` + err.message, 'error'); }
+      }
+      setProgress(100, 'Hoàn tất!');
+      setTimeout(() => { showProgress(false); renderMergeGrid(); updateMergeStats(); showToast(`Đã thêm ${mergeState.items.length} trang!`); }, 300);
+    }
+
+    function renderMergeGrid() {
+      mergePagesGrid.innerHTML = '';
+      mergeState.items.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = `group relative bg-white rounded-2xl border-2 transition-all flex flex-col overflow-hidden shadow-edu-sm select-none cursor-grab active:cursor-grabbing ${item.selected ? 'border-edu-green ring-2 ring-edu-green/20' : 'border-slate-200 opacity-60 bg-slate-50'}`;
+        card.dataset.id = item.id;
+        const isPdf = item.type === 'pdf';
+        card.innerHTML = `
+          <div class="p-2 bg-edu-tint border-b border-edu-green/20 flex items-center justify-between gap-1.5">
+            <label class="flex items-center gap-1.5 cursor-pointer truncate no-drag">
+              <input type="checkbox" ${item.selected ? 'checked' : ''} class="item-checkbox w-4 h-4 rounded text-edu-teal border-slate-300 focus:ring-edu-green cursor-pointer">
+              <span class="text-xs font-bold text-edu-teal truncate" title="${item.sourceName}">${isPdf ? `Trang ${item.displayPageNum}` : item.sourceName}</span>
+            </label>
+            <div class="flex items-center gap-1">
+              <span class="px-2 py-0.5 rounded-lg text-[10px] font-black ${isPdf ? 'bg-rose-100 text-rose-700' : 'bg-edu-cream text-edu-teal'}">${isPdf ? 'PDF' : 'ẢNH'}</span>
+              <span class="cursor-grab active:cursor-grabbing text-edu-teal/50 hover:text-edu-teal p-1 handle-drag" title="Kéo để sắp xếp"><i class="fa-solid fa-grip-vertical text-xs"></i></span>
+            </div>
+          </div>
+          <div class="relative bg-slate-100 aspect-[1/1.35] overflow-hidden flex items-center justify-center p-3 cursor-grab group/img merge-thumb-area">
+            <img src="${item.thumbUrl}" alt="Thumbnail" class="max-w-full max-h-full object-contain rounded drop-shadow rot-${item.rotation} transition-transform duration-200 pointer-events-none">
+            <div class="absolute inset-0 bg-edu-teal/20 backdrop-blur-[1px] opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center pointer-events-none">
+              <span class="px-3 py-1 bg-edu-yellow rounded-xl text-xs font-extrabold text-edu-teal shadow border border-edu-green/40">Kéo để di chuyển · Double-click xem lớn</span>
+            </div>
+          </div>
+          <div class="p-2 bg-white border-t border-edu-green/20 flex items-center justify-between text-edu-teal">
+            <div class="flex items-center gap-1">
+              <button class="btn-left p-1.5 rounded-lg hover:bg-edu-cream transition text-xs disabled:opacity-30 no-drag" ${index === 0 ? 'disabled' : ''} title="Chuyển sang trái"><i class="fa-solid fa-arrow-left"></i></button>
+              <button class="btn-right p-1.5 rounded-lg hover:bg-edu-cream transition text-xs disabled:opacity-30 no-drag" ${index === mergeState.items.length - 1 ? 'disabled' : ''} title="Chuyển sang phải"><i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button class="btn-rot p-1.5 rounded-lg hover:bg-edu-cream transition text-xs no-drag" title="Xoay 90 độ"><i class="fa-solid fa-rotate-right"></i></button>
+              <button class="btn-del p-1.5 rounded-lg hover:bg-rose-50 hover:text-edu-red transition text-xs no-drag" title="Xóa"><i class="fa-regular fa-trash-can"></i></button>
+            </div>
+          </div>
+        `;
+        card.querySelector('.item-checkbox').addEventListener('change', (e) => { item.selected = e.target.checked; renderMergeGrid(); updateMergeStats(); });
+        // Double-click to view large (single click/drag is reserved for reorder)
+        card.querySelector('.merge-thumb-area').addEventListener('dblclick', () => openLightbox(`${item.sourceName}`, item.thumbUrl));
+        card.querySelector('.btn-left').addEventListener('click', (e) => { e.stopPropagation(); moveMergeItem(index, index - 1); });
+        card.querySelector('.btn-right').addEventListener('click', (e) => { e.stopPropagation(); moveMergeItem(index, index + 1); });
+        card.querySelector('.btn-rot').addEventListener('click', (e) => { e.stopPropagation(); item.rotation = (item.rotation + 90) % 360; renderMergeGrid(); });
+        card.querySelector('.btn-del').addEventListener('click', (e) => { e.stopPropagation(); mergeState.items.splice(index, 1); renderMergeGrid(); updateMergeStats(); showToast('Đã xóa 1 trang'); });
+        mergePagesGrid.appendChild(card);
+      });
+    }
+
+    // Kéo thả toàn bộ thẻ bằng chuột trái (trừ checkbox & nút bấm)
+    if (window.Sortable) {
+      new Sortable(mergePagesGrid, {
+        animation: 220,
+        // Không giới hạn handle → click trái giữ trên thẻ là kéo được
+        filter: '.no-drag, .item-checkbox, button, input, label, a',
+        preventOnFilter: true,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        forceFallback: false,
+        fallbackTolerance: 4,
+        delay: 0,
+        delayOnTouchOnly: true,
+        onStart: () => { document.body.style.cursor = 'grabbing'; },
+        onEnd: (evt) => {
+          document.body.style.cursor = '';
+          if (evt.oldIndex === evt.newIndex) return;
+          const moved = mergeState.items.splice(evt.oldIndex, 1)[0];
+          mergeState.items.splice(evt.newIndex, 0, moved);
+          renderMergeGrid();
+          updateMergeStats();
+          showToast('Đã đổi vị trí trang');
+        }
+      });
+    }
+
+    function moveMergeItem(from, to) {
+      if (to < 0 || to >= mergeState.items.length) return;
+      const item = mergeState.items.splice(from, 1)[0];
+      mergeState.items.splice(to, 0, item);
+      renderMergeGrid();
+      updateMergeStats();
+    }
+
+    function updateMergeStats() {
+      const total = mergeState.items.length;
+      const sel = mergeState.items.filter(i => i.selected).length;
+      mergeStatTotal.textContent = total; mergeStatSelected.textContent = sel;
+      mergeExportBtn.disabled = sel === 0;
+      if (total === 0) mergeWorkspace.classList.add('hidden');
+      else mergeWorkspace.classList.remove('hidden');
+    }
+
+    mergeSelectAllBtn.addEventListener('click', () => { mergeState.items.forEach(i => i.selected = true); renderMergeGrid(); updateMergeStats(); });
+    mergeDeselectAllBtn.addEventListener('click', () => { mergeState.items.forEach(i => i.selected = false); renderMergeGrid(); updateMergeStats(); });
+    mergeClearAllBtn.addEventListener('click', () => { mergeState.items = []; renderMergeGrid(); updateMergeStats(); showToast('Đã làm mới!'); });
+
+    mergeExportBtn.addEventListener('click', async () => {
+      const selected = mergeState.items.filter(i => i.selected);
+      if (!selected.length) { showToast('Vui lòng chọn ít nhất 1 trang!', 'error'); return; }
+      mergeExportBtn.disabled = true; showProgress(true); setProgress(10, 'Đang chuẩn bị ghép file PDF chuẩn A4...');
+
+      try {
+        const pagesData = []; const layoutMode = mergeA4LayoutSelect.value;
+        for (let i = 0; i < selected.length; i++) {
+          const item = selected[i];
+          setProgress(10 + ((i + 1) / selected.length) * 75, `Đang xử lý trang ${i + 1} / ${selected.length}...`);
+          const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d', { alpha: false });
+          if (item.type === 'pdf') {
+            const page = item.pdfJsPage; const scale = 2.0;
+            const vp = page.getViewport({ scale, rotation: item.rotation });
+            canvas.width = Math.round(vp.width); canvas.height = Math.round(vp.height);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport: vp }).promise;
+            const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.93));
+            const buf = await blob.arrayBuffer();
+            pagesData.push({ jpegBytes: new Uint8Array(buf), pixelWidth: canvas.width, pixelHeight: canvas.height, widthPt: item.widthPt, heightPt: item.heightPt });
+          } else {
+            const img = new Image(); await new Promise(res => { img.onload = res; img.src = item.thumbUrl; });
+            const rot = item.rotation % 360; const isSwap = (rot === 90 || rot === 270);
+            const w = isSwap ? img.naturalHeight : img.naturalWidth; const h = isSwap ? img.naturalWidth : img.naturalHeight;
+            canvas.width = w; canvas.height = h; ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
+            ctx.translate(w / 2, h / 2); ctx.rotate((rot * Math.PI) / 180);
+            ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+            const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
+            const buf = await blob.arrayBuffer();
+            pagesData.push({ jpegBytes: new Uint8Array(buf), pixelWidth: w, pixelHeight: h, widthPt: item.widthPt, heightPt: item.heightPt });
+          }
+        }
+
+        setProgress(90, 'Đang tạo tệp PDF kết quả...');
+        const finalPdfBytes = NativePurePdfGenerator.createFromPages(pagesData, layoutMode);
+        const cleanName = sanitizeForZipFilename(mergeFilenameInput.value.trim(), 'Tai_lieu_da_ghep');
+        downloadBlob(new Blob([finalPdfBytes], { type: 'application/pdf' }), `${cleanName}.pdf`);
+        setProgress(100, 'Đã xuất PDF thành công!');
+        setTimeout(() => { showProgress(false); mergeExportBtn.disabled = false; showToast('Đã xuất PDF thành công!'); }, 400);
+      } catch (err) {
+        showProgress(false); mergeExportBtn.disabled = false; showToast('Lỗi: ' + err.message, 'error');
+      }
+    });
+
+    /* =========================================================================
+       6. LOGIC MODULE 3: NÉN FILE PDF (MỨC 1–8 + ƯỚC TÍNH DUNG LƯỢNG)
+       ========================================================================= */
+    const compressState = {
+      file: null, rawName: '', arrayBuffer: null, pageCount: 0, pdfDoc: null,
+      estimateCache: {}, estimateToken: 0
+    };
+    const compressUploadCard = document.getElementById('compress-upload-card');
+    const compressFileInput = document.getElementById('compress-file-input');
+    const compressBrowseBtn = document.getElementById('compress-browse-btn');
+    const compressWorkspace = document.getElementById('compress-workspace');
+    const compressFilename = document.getElementById('compress-filename');
+    const compressOrigSize = document.getElementById('compress-orig-size');
+    const compressPageCount = document.getElementById('compress-page-count');
+    const compressChangeBtn = document.getElementById('compress-change-btn');
+    const compressOutFilename = document.getElementById('compress-out-filename');
+    const compressExecuteBtn = document.getElementById('compress-execute-btn');
+    const compressEstimateLevel = document.getElementById('compress-estimate-level');
+    const compressEstimateSize = document.getElementById('compress-estimate-size');
+    const compressEstimateRatio = document.getElementById('compress-estimate-ratio');
+    const compressEstimateStatus = document.getElementById('compress-estimate-status');
+
+    /**
+     * Mức 1 = giữ nét nhất · Mức 8 = nhỏ nhất
+     * scale + jpeg được tinh chỉnh để cân bằng chất lượng / dung lượng
+     */
+    const COMPRESS_PRESETS = {
+      1: { scale: 2.00, jpeg: 0.92, label: 'Siêu nét' },
+      2: { scale: 1.75, jpeg: 0.88, label: 'Nét cao' },
+      3: { scale: 1.55, jpeg: 0.84, label: 'Chuẩn+' },
+      4: { scale: 1.40, jpeg: 0.80, label: 'Khuyên dùng' },
+      5: { scale: 1.22, jpeg: 0.74, label: 'Thu gọn' },
+      6: { scale: 1.08, jpeg: 0.66, label: 'Nhẹ' },
+      7: { scale: 0.92, jpeg: 0.55, label: 'Rất nhỏ' },
+      8: { scale: 0.78, jpeg: 0.42, label: 'Cực nhỏ' }
+    };
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function setCompressEstimateUI(level, sizeBytes, isLoading) {
+      const preset = COMPRESS_PRESETS[level] || COMPRESS_PRESETS[4];
+      const levelWord = currentLang === 'en' ? 'Level' : 'Mức';
+      compressEstimateLevel.textContent = `${levelWord} ${level} (${preset.label})`;
+      if (isLoading) {
+        compressEstimateSize.textContent = currentLang === 'en' ? 'Calculating...' : 'Đang tính...';
+        compressEstimateRatio.textContent = '';
+        compressEstimateStatus.textContent = currentLang === 'en'
+          ? 'Sampling pages to estimate size...'
+          : 'Đang lấy mẫu trang để ước tính dung lượng...';
+        return;
+      }
+      if (sizeBytes == null || !compressState.file) {
+        compressEstimateSize.textContent = '—';
+        compressEstimateRatio.textContent = '';
+        compressEstimateStatus.textContent = t('compress.estHint');
+        return;
+      }
+      const orig = compressState.file.size;
+      const ratio = orig > 0 ? Math.round((1 - sizeBytes / orig) * 100) : 0;
+      compressEstimateSize.textContent = formatBytes(sizeBytes);
+      compressEstimateRatio.textContent = ratio > 0
+        ? (currentLang === 'en'
+            ? `(~${ratio}% smaller than ${formatBytes(orig)})`
+            : `(giảm ~${ratio}% so với ${formatBytes(orig)})`)
+        : `(≈ ${formatBytes(orig)})`;
+      compressEstimateStatus.textContent = currentLang === 'en'
+        ? 'Estimate based on page samples · actual size may vary slightly'
+        : 'Ước tính dựa trên mẫu trang · dung lượng thực tế có thể lệch nhẹ';
+    }
+
+    /**
+     * Ước tính dung lượng sau nén bằng cách render 1–2 trang mẫu rồi nhân theo số trang.
+     * Kết quả được cache theo mức để chọn lại không phải tính lại.
+     */
+    async function estimateCompressSize(level) {
+      if (!compressState.arrayBuffer || !compressState.pageCount) return null;
+      if (compressState.estimateCache[level] != null) return compressState.estimateCache[level];
+
+      const preset = COMPRESS_PRESETS[level] || COMPRESS_PRESETS[4];
+      const token = ++compressState.estimateToken;
+      setCompressEstimateUI(level, null, true);
+
+      try {
+        const pdf = compressState.pdfDoc
+          || await pdfjsLib.getDocument({ data: compressState.arrayBuffer.slice(0) }).promise;
+        compressState.pdfDoc = pdf;
+
+        const sampleCount = Math.min(2, pdf.numPages);
+        let sampleBytes = 0;
+
+        for (let i = 1; i <= sampleCount; i++) {
+          if (token !== compressState.estimateToken) return null; // user đổi mức khác
+          const page = await pdf.getPage(i);
+          const vp = page.getViewport({ scale: preset.scale });
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(vp.width));
+          canvas.height = Math.max(1, Math.round(vp.height));
+          const ctx = canvas.getContext('2d', { alpha: false });
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await page.render({ canvasContext: ctx, viewport: vp }).promise;
+          const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', preset.jpeg));
+          // overhead PDF object ~ 400–800 bytes/page
+          sampleBytes += blob.size + 600;
+        }
+
+        if (token !== compressState.estimateToken) return null;
+        const avgPerPage = sampleBytes / sampleCount;
+        // header + xref overhead ~ 2–4 KB
+        const estimated = Math.round(avgPerPage * pdf.numPages + 3000);
+        compressState.estimateCache[level] = estimated;
+        return estimated;
+      } catch (err) {
+        console.warn('Estimate failed', err);
+        return null;
+      }
+    }
+
+    async function onCompressLevelSelected(level) {
+      const size = await estimateCompressSize(level);
+      if (size != null) setCompressEstimateUI(level, size, false);
+      else if (!compressState.arrayBuffer) setCompressEstimateUI(level, null, false);
+    }
+
+    compressUploadCard.addEventListener('click', () => compressFileInput.click());
+    compressBrowseBtn.addEventListener('click', (e) => { e.stopPropagation(); compressFileInput.click(); });
+    compressFileInput.addEventListener('change', (e) => { if (e.target.files && e.target.files[0]) processCompressFile(e.target.files[0]); compressFileInput.value = ''; });
+    compressChangeBtn.addEventListener('click', () => {
+      compressUploadCard.classList.remove('hidden');
+      compressWorkspace.classList.add('hidden');
+      compressState.file = null;
+      compressState.arrayBuffer = null;
+      compressState.pdfDoc = null;
+      compressState.estimateCache = {};
+      setCompressEstimateUI(4, null, false);
+    });
+
+    document.querySelectorAll('.compress-level-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.compress-level-card').forEach(c => {
+          c.classList.remove('border-edu-green', 'bg-edu-tint');
+          c.classList.add('border-slate-200', 'bg-white');
+        });
+        card.classList.remove('border-slate-200', 'bg-white');
+        card.classList.add('border-edu-green', 'bg-edu-tint');
+        const radio = card.querySelector('input[type="radio"]');
+        radio.checked = true;
+        const level = parseInt(radio.value, 10);
+        onCompressLevelSelected(level);
+      });
+    });
+
+    async function processCompressFile(file) {
+      if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+        showToast('Vui lòng chọn file PDF hợp lệ!', 'error'); return;
+      }
+      compressState.file = file;
+      compressState.rawName = file.name.replace(/\.[^/.]+$/, '');
+      compressState.estimateCache = {};
+      compressState.pdfDoc = null;
+      showProgress(true); setProgress(10, 'Đang đọc file PDF để nén...');
+      try {
+        compressState.arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: compressState.arrayBuffer.slice(0) }).promise;
+        compressState.pdfDoc = pdf;
+        compressState.pageCount = pdf.numPages;
+
+        compressFilename.textContent = file.name;
+        compressOrigSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+        compressPageCount.textContent = pdf.numPages;
+        compressOutFilename.value = sanitizeForZipFilename(compressState.rawName, 'Tai_lieu') + '_nen';
+
+        setProgress(100, 'Sẵn sàng nén!');
+        setTimeout(() => {
+          showProgress(false);
+          compressUploadCard.classList.add('hidden');
+          compressWorkspace.classList.remove('hidden');
+          showToast('Nạp file nén thành công!');
+          // Ước tính luôn cho mức đang chọn (mặc định Mức 4)
+          const checked = document.querySelector('input[name="compress-level"]:checked');
+          const level = checked ? parseInt(checked.value, 10) : 4;
+          onCompressLevelSelected(level);
+        }, 200);
+      } catch (err) {
+        showProgress(false); showToast('Lỗi đọc file PDF: ' + err.message, 'error');
+      }
+    }
+
+    compressExecuteBtn.addEventListener('click', async () => {
+      if (!compressState.arrayBuffer) return;
+      const levelRadio = document.querySelector('input[name="compress-level"]:checked');
+      const level = levelRadio ? parseInt(levelRadio.value, 10) : 4;
+      const preset = COMPRESS_PRESETS[level] || COMPRESS_PRESETS[4];
+      const scaleVal = preset.scale;
+      const jpegQuality = preset.jpeg;
+
+      compressExecuteBtn.disabled = true;
+      showProgress(true);
+      setProgress(8, `Đang nén Mức ${level} (${preset.label})...`, 'Giữ chất lượng tối ưu · Scale & JPEG thông minh');
+
+      try {
+        const pdf = compressState.pdfDoc
+          || await pdfjsLib.getDocument({ data: compressState.arrayBuffer.slice(0) }).promise;
+        const total = pdf.numPages;
+        const pagesData = [];
+
+        for (let i = 1; i <= total; i++) {
+          setProgress(10 + ((i / total) * 78), `Đang tối ưu trang ${i} / ${total}...`);
+          const page = await pdf.getPage(i);
+          const unscaledVp = page.getViewport({ scale: 1.0 });
+          const vp = page.getViewport({ scale: scaleVal });
+
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(vp.width));
+          canvas.height = Math.max(1, Math.round(vp.height));
+          const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: false });
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+          let blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', jpegQuality));
+
+          // Với mức ≥ 5 (nén mạnh hơn): nếu trang quá nặng, thử giảm nhẹ quality
+          if (level >= 5 && blob.size > 480 * 1024) {
+            const altQ = Math.max(0.28, jpegQuality - 0.08);
+            const altBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', altQ));
+            if (altBlob.size < blob.size * 0.88) blob = altBlob;
+          }
+
+          const buf = await blob.arrayBuffer();
+          pagesData.push({
+            jpegBytes: new Uint8Array(buf),
+            pixelWidth: canvas.width,
+            pixelHeight: canvas.height,
+            widthPt: unscaledVp.width,
+            heightPt: unscaledVp.height
+          });
+        }
+
+        setProgress(92, 'Đang đóng gói PDF nén...');
+        const compressedBytes = NativePurePdfGenerator.createFromPages(pagesData, 'fit');
+        const outName = sanitizeForZipFilename(compressOutFilename.value.trim(), 'Tai_lieu_da_nen') + '.pdf';
+        downloadBlob(new Blob([compressedBytes], { type: 'application/pdf' }), outName);
+
+        // Cập nhật cache ước tính bằng kích thước thật
+        compressState.estimateCache[level] = compressedBytes.length;
+        setCompressEstimateUI(level, compressedBytes.length, false);
+
+        setProgress(100, 'Nén thành công!');
+        setTimeout(() => {
+          showProgress(false);
+          compressExecuteBtn.disabled = false;
+          const origSizeMb = (compressState.file.size / (1024 * 1024)).toFixed(2);
+          const newSizeMb = (compressedBytes.length / (1024 * 1024)).toFixed(2);
+          const ratio = compressState.file.size > 0
+            ? Math.round((1 - compressedBytes.length / compressState.file.size) * 100)
+            : 0;
+          showToast(`Nén Mức ${level} thành công! ${origSizeMb}MB → ${newSizeMb}MB (giảm ~${ratio}%).`);
+        }, 400);
+
+      } catch (err) {
+        showProgress(false);
+        compressExecuteBtn.disabled = false;
+        showToast('Lỗi khi nén PDF: ' + err.message, 'error');
+      }
+    });
+
+    /* =========================================================================
+       7. LOGIC MODULE 4: TÁCH FILE PDF
+       ========================================================================= */
+    const splitState = { file: null, rawFileName: '', safeFileName: '', pdfDoc: null, totalPages: 0, activeMode: 'all', pages: [], ranges: [] };
+    const splitUploadCard = document.getElementById('split-upload-card');
+    const splitFileInput = document.getElementById('split-file-input');
+    const splitWorkspace = document.getElementById('split-workspace');
+    const splitSourceFilename = document.getElementById('split-source-filename');
+    const splitTotalPagesBadge = document.getElementById('split-total-pages-badge');
+    const splitFilesizeBadge = document.getElementById('split-filesize-badge');
+    const splitChangeFileBtn = document.getElementById('split-change-file-btn');
+    const splitModeBtnAll = document.getElementById('split-mode-btn-all');
+    const splitModeBtnRanges = document.getElementById('split-mode-btn-ranges');
+    const splitModeBtnVisual = document.getElementById('split-mode-btn-visual');
+    const splitModePaneAll = document.getElementById('split-mode-pane-all');
+    const splitModePaneRanges = document.getElementById('split-mode-pane-ranges');
+    const splitModePaneVisual = document.getElementById('split-mode-pane-visual');
+    const splitRangeInput = document.getElementById('split-range-input');
+    const splitRangeApplyBtn = document.getElementById('split-range-apply-btn');
+    const splitRangePreviewChips = document.getElementById('split-range-preview-chips');
+    const splitVisualSelectAll = document.getElementById('split-visual-select-all');
+    const splitVisualDeselectAll = document.getElementById('split-visual-deselect-all');
+    const splitFilenamePrefix = document.getElementById('split-filename-prefix');
+    const splitExecuteBtn = document.getElementById('split-execute-btn');
+    const splitExecuteLabel = document.getElementById('split-execute-label');
+    const splitPagesGrid = document.getElementById('split-pages-grid');
+
+    splitUploadCard.addEventListener('click', () => splitFileInput.click());
+    splitFileInput.addEventListener('change', (e) => { if (e.target.files && e.target.files[0]) processSplitFile(e.target.files[0]); splitFileInput.value = ''; });
+    splitChangeFileBtn.addEventListener('click', () => { splitUploadCard.classList.remove('hidden'); splitWorkspace.classList.add('hidden'); splitState.file = null; });
+
+    async function processSplitFile(file) {
+      if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') { showToast('Vui lòng chọn file .PDF!', 'error'); return; }
+      splitState.file = file; splitState.rawFileName = file.name.replace(/\.[^/.]+$/, '');
+      splitState.safeFileName = sanitizeForZipFilename(splitState.rawFileName, 'Tach_tai_lieu');
+      splitState.pages = [];
+
+      showProgress(true); setProgress(5, 'Đang đọc tài liệu PDF...');
+      try {
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        splitState.pdfDoc = pdf; splitState.totalPages = pdf.numPages;
+        splitSourceFilename.textContent = file.name;
+        splitTotalPagesBadge.textContent = pdf.numPages;
+        splitFilesizeBadge.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          setProgress(10 + ((i / pdf.numPages) * 85), `Đang tạo ảnh xem trước trang ${i} / ${pdf.numPages}...`);
+          const page = await pdf.getPage(i);
+          const thumb = page.getViewport({ scale: 0.75 });
+          const canvas = document.createElement('canvas'); canvas.width = thumb.width; canvas.height = thumb.height;
+          const ctx = canvas.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await page.render({ canvasContext: ctx, viewport: thumb }).promise;
+          splitState.pages.push({ pageNum: i, thumbUrl: canvas.toDataURL('image/jpeg', 0.8), selected: true });
+        }
+
+        setProgress(100, 'Hoàn tất!');
+        setTimeout(() => {
+          showProgress(false); splitUploadCard.classList.add('hidden'); splitWorkspace.classList.remove('hidden');
+          renderSplitGrid(); parseAndShowSplitRanges(); showToast(`Đã nạp ${splitState.totalPages} trang!`);
+        }, 300);
+      } catch (err) { showProgress(false); showToast('Lỗi: ' + err.message, 'error'); }
+    }
+
+    function renderSplitGrid() {
+      splitPagesGrid.innerHTML = '';
+      splitState.pages.forEach(p => {
+        const card = document.createElement('div');
+        card.className = `group relative bg-white rounded-2xl border-2 transition-all flex flex-col overflow-hidden shadow-edu-sm cursor-pointer ${p.selected ? 'border-edu-green ring-2 ring-edu-green/20' : 'border-slate-200 opacity-60'}`;
+        card.innerHTML = `
+          <div class="p-2 bg-edu-tint border-b border-edu-green/20 flex items-center justify-between">
+            <span class="text-xs font-black ${p.selected ? 'text-edu-teal' : 'text-slate-400'}">Trang ${p.pageNum}</span>
+            <input type="checkbox" ${p.selected ? 'checked' : ''} class="split-checkbox w-4 h-4 rounded text-edu-teal border-slate-300 focus:ring-edu-green cursor-pointer">
+          </div>
+          <div class="p-2 bg-slate-100 aspect-[1/1.35] flex items-center justify-center relative overflow-hidden group/thumb">
+            <img src="${p.thumbUrl}" alt="Trang ${p.pageNum}" class="max-w-full max-h-full object-contain rounded drop-shadow bg-white">
+            <div class="absolute inset-0 bg-edu-teal/25 backdrop-blur-[1px] opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center">
+              <span class="px-2.5 py-1 bg-edu-yellow rounded-xl text-[11px] font-extrabold text-edu-teal shadow border border-edu-green/40">Xem lớn</span>
+            </div>
+          </div>
+        `;
+        const cb = card.querySelector('.split-checkbox');
+        cb.addEventListener('change', (e) => { e.stopPropagation(); p.selected = cb.checked; renderSplitGrid(); });
+        card.addEventListener('click', (e) => { if (e.target.tagName !== 'INPUT') openLightbox(`Trang ${p.pageNum}`, p.thumbUrl); });
+        splitPagesGrid.appendChild(card);
+      });
+    }
+
+    function setSplitMode(mode) {
+      splitState.activeMode = mode;
+      [splitModeBtnAll, splitModeBtnRanges, splitModeBtnVisual].forEach(btn => {
+        btn.classList.remove('active', 'bg-edu-teal', 'text-white', 'shadow'); btn.classList.add('text-edu-teal');
+      });
+      [splitModePaneAll, splitModePaneRanges, splitModePaneVisual].forEach(pane => pane.classList.add('hidden'));
+
+      if (mode === 'all') {
+        splitModeBtnAll.classList.add('active', 'bg-edu-teal', 'text-white', 'shadow');
+        splitModePaneAll.classList.remove('hidden'); splitExecuteLabel.textContent = 'Tách Từng Trang (ZIP)';
+      } else if (mode === 'ranges') {
+        splitModeBtnRanges.classList.add('active', 'bg-edu-teal', 'text-white', 'shadow');
+        splitModePaneRanges.classList.remove('hidden'); splitExecuteLabel.textContent = 'Tách Theo Dải Phân Đoạn';
+        if (!splitRangeInput.value.trim() && splitState.totalPages > 1) {
+          const mid = Math.ceil(splitState.totalPages / 2);
+          splitRangeInput.value = `1-${mid}, ${mid + 1}-${splitState.totalPages}`;
+          parseAndShowSplitRanges();
+        }
+      } else if (mode === 'visual') {
+        splitModeBtnVisual.classList.add('active', 'bg-edu-teal', 'text-white', 'shadow');
+        splitModePaneVisual.classList.remove('hidden'); splitExecuteLabel.textContent = 'Xuất Các Trang Đã Chọn';
+      }
+    }
+
+    splitModeBtnAll.addEventListener('click', () => setSplitMode('all'));
+    splitModeBtnRanges.addEventListener('click', () => setSplitMode('ranges'));
+    splitModeBtnVisual.addEventListener('click', () => setSplitMode('visual'));
+
+    function parseRangeGroups(str, max) {
+      const parts = str.split(',').map(s => s.trim()).filter(Boolean);
+      const res = [];
+      for (const p of parts) {
+        if (p.includes('-')) {
+          let [s, e] = p.split('-').map(x => parseInt(x.trim(), 10));
+          if (isNaN(s) || isNaN(e)) continue;
+          if (s > e) [s, e] = [e, s];
+          s = Math.max(1, s); e = Math.min(max, e);
+          const list = []; for (let k = s; k <= e; k++) list.push(k);
+          if (list.length) res.push(list);
+        } else {
+          const n = parseInt(p, 10);
+          if (!isNaN(n) && n >= 1 && n <= max) res.push([n]);
+        }
+      }
+      return res;
+    }
+
+    function parseAndShowSplitRanges() {
+      splitState.ranges = parseRangeGroups(splitRangeInput.value.trim(), splitState.totalPages);
+      splitRangePreviewChips.innerHTML = '';
+      if (!splitState.ranges.length) {
+        splitRangePreviewChips.innerHTML = '<span class="text-xs text-edu-red italic font-semibold">Chuous có dải trang hợp lệ.</span>';
+        return;
+      }
+      splitState.ranges.forEach((pages, idx) => {
+        const chip = document.createElement('div');
+        chip.className = 'px-3 py-1 bg-white border border-edu-green/50 rounded-xl text-xs font-bold text-edu-teal shadow-sm flex items-center gap-1.5';
+        const lbl = pages.length === 1 ? `Trang ${pages[0]}` : `Trang ${pages[0]} &rarr; ${pages[pages.length - 1]} (${pages.length} trang)`;
+        chip.innerHTML = `<span class="w-2 h-2 rounded-full bg-edu-green"></span><span>Tập ${idx + 1}:</span> <span>${lbl}</span>`;
+        splitRangePreviewChips.appendChild(chip);
+      });
+    }
+
+    splitRangeApplyBtn.addEventListener('click', parseAndShowSplitRanges);
+    splitVisualSelectAll.addEventListener('click', () => { splitState.pages.forEach(p => p.selected = true); renderSplitGrid(); });
+    splitVisualDeselectAll.addEventListener('click', () => { splitState.pages.forEach(p => p.selected = false); renderSplitGrid(); });
+
+    splitExecuteBtn.addEventListener('click', async () => {
+      if (!splitState.pdfDoc) return;
+      const plan = buildSplitPlan();
+      if (!plan.length) { showToast('Vui lòng chọn ít nhất 1 trang!', 'error'); return; }
+
+      splitExecuteBtn.disabled = true; showProgress(true); setProgress(5, 'Đang phân tách file...');
+      try {
+        const generated = [];
+        for (let fIdx = 0; fIdx < plan.length; fIdx++) {
+          const item = plan[fIdx];
+          setProgress(5 + Math.round(((fIdx + 1) / plan.length) * 80), `Đang xử lý: ${item.name}...`);
+          const pagesData = [];
+          for (const pageNum of item.pages) {
+            const page = await splitState.pdfDoc.getPage(pageNum);
+            const vp = page.getViewport({ scale: 2.0 });
+            const canvas = document.createElement('canvas'); canvas.width = Math.round(vp.width); canvas.height = Math.round(vp.height);
+            const ctx = canvas.getContext('2d', { alpha: false }); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport: vp }).promise;
+            const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.94));
+            const buf = await blob.arrayBuffer();
+            pagesData.push({ jpegBytes: new Uint8Array(buf), pixelWidth: canvas.width, pixelHeight: canvas.height, widthPt: 595.28, heightPt: 841.89 });
+          }
+          const fileBytes = NativePurePdfGenerator.createFromPages(pagesData, 'fit');
+          generated.push({ name: item.name, data: fileBytes });
+        }
+
+        if (generated.length === 1) {
+          setProgress(100, 'Hoàn tất!');
+          downloadBlob(new Blob([generated[0].data], { type: 'application/pdf' }), generated[0].name);
+          showToast(`Đã xuất thành công: ${generated[0].name}`);
+        } else {
+          setProgress(90, 'Đang đóng gói file ZIP...');
+          const zipBlob = await createSafeZipBlob(generated);
+          const zipName = `${sanitizeForZipFilename(splitFilenamePrefix.value.trim() || splitState.safeFileName)}_Tach.zip`;
+          downloadBlob(zipBlob, zipName);
+          setProgress(100, 'Hoàn tất!');
+          showToast(`Đã đóng gói ${generated.length} file thành công (.ZIP)!`);
+        }
+      } catch (err) { showToast('Lỗi: ' + err.message, 'error'); }
+      finally { setTimeout(() => { showProgress(false); splitExecuteBtn.disabled = false; }, 400); }
+    });
+
+    function buildSplitPlan() {
+      const rawPrefix = splitFilenamePrefix.value.trim() || splitState.rawFileName || 'Tach';
+      const cleanPrefix = sanitizeForZipFilename(rawPrefix, 'Tach');
+      const plan = [];
+      if (splitState.activeMode === 'all') {
+        for (let i = 1; i <= splitState.totalPages; i++) plan.push({ name: `${cleanPrefix}_Trang_${i}.pdf`, pages: [i] });
+      } else if (splitState.activeMode === 'ranges') {
+        if (!splitState.ranges.length) parseAndShowSplitRanges();
+        splitState.ranges.forEach((pages, idx) => {
+          const lbl = pages.length === 1 ? `Trang_${pages[0]}` : `Trang_${pages[0]}-${pages[pages.length - 1]}`;
+          plan.push({ name: `${cleanPrefix}_Tap_${idx + 1}_(${lbl}).pdf`, pages });
+        });
+      } else if (splitState.activeMode === 'visual') {
+        const selected = splitState.pages.filter(p => p.selected).map(p => p.pageNum);
+        if (!selected.length) return [];
+        const type = document.querySelector('input[name="split-visual-mode"]:checked').value;
+        if (type === 'merged') {
+          plan.push({ name: `${cleanPrefix}_Gop_${selected.length}_Trang.pdf`, pages: selected });
+        } else {
+          selected.forEach(pNum => plan.push({ name: `${cleanPrefix}_Trang_${pNum}.pdf`, pages: [pNum] }));
+        }
+      }
+      return plan;
+    }
+
+    /* =========================================================================
+       8. MODULE 5: WATERMARK
+       ========================================================================= */
+    const wmState = { file: null, arrayBuffer: null, pageCount: 0, pdfDoc: null };
+    const wmUploadCard = document.getElementById('wm-upload-card');
+    const wmFileInput = document.getElementById('wm-file-input');
+    const wmBrowseBtn = document.getElementById('wm-browse-btn');
+    const wmWorkspace = document.getElementById('wm-workspace');
+    const wmFilename = document.getElementById('wm-filename');
+    const wmPageCount = document.getElementById('wm-page-count');
+    const wmChangeBtn = document.getElementById('wm-change-btn');
+    const wmText = document.getElementById('wm-text');
+    const wmOpacity = document.getElementById('wm-opacity');
+    const wmOpacityVal = document.getElementById('wm-opacity-val');
+    const wmAngle = document.getElementById('wm-angle');
+    const wmColor = document.getElementById('wm-color');
+    const wmOutFilename = document.getElementById('wm-out-filename');
+    const wmExecuteBtn = document.getElementById('wm-execute-btn');
+
+    wmOpacity.addEventListener('input', () => { wmOpacityVal.textContent = wmOpacity.value; });
+    wmUploadCard.addEventListener('click', () => wmFileInput.click());
+    wmBrowseBtn.addEventListener('click', (e) => { e.stopPropagation(); wmFileInput.click(); });
+    wmFileInput.addEventListener('change', (e) => { if (e.target.files?.[0]) processWmFile(e.target.files[0]); wmFileInput.value = ''; });
+    wmChangeBtn.addEventListener('click', () => { wmUploadCard.classList.remove('hidden'); wmWorkspace.classList.add('hidden'); wmState.file = null; });
+
+    async function processWmFile(file) {
+      if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+        showToast(currentLang === 'en' ? 'Please choose a PDF file!' : 'Vui lòng chọn file PDF!', 'error'); return;
+      }
+      showProgress(true); setProgress(10, currentLang === 'en' ? 'Reading PDF...' : 'Đang đọc PDF...');
+      try {
+        wmState.file = file;
+        wmState.arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: wmState.arrayBuffer.slice(0) }).promise;
+        wmState.pdfDoc = pdf;
+        wmState.pageCount = pdf.numPages;
+        wmFilename.textContent = file.name;
+        wmPageCount.textContent = pdf.numPages;
+        wmOutFilename.value = sanitizeForZipFilename(file.name.replace(/\.[^/.]+$/, ''), 'Tai_lieu') + '_watermark';
+        setProgress(100, 'OK');
+        setTimeout(() => { showProgress(false); wmUploadCard.classList.add('hidden'); wmWorkspace.classList.remove('hidden'); showToast(currentLang === 'en' ? 'PDF loaded!' : 'Đã nạp PDF!'); }, 200);
+      } catch (err) { showProgress(false); showToast('Lỗi: ' + err.message, 'error'); }
+    }
+
+    wmExecuteBtn.addEventListener('click', async () => {
+      if (!wmState.arrayBuffer) return;
+      const text = (wmText.value || 'WATERMARK').trim();
+      const opacity = (parseInt(wmOpacity.value, 10) || 28) / 100;
+      const angleDeg = parseFloat(wmAngle.value) || -45;
+      const color = wmColor.value || '#888888';
+      wmExecuteBtn.disabled = true;
+      showProgress(true); setProgress(8, currentLang === 'en' ? 'Applying watermark...' : 'Đang đóng dấu...');
+      try {
+        const pdf = wmState.pdfDoc || await pdfjsLib.getDocument({ data: wmState.arrayBuffer.slice(0) }).promise;
+        const total = pdf.numPages;
+        const pagesData = [];
+        for (let i = 1; i <= total; i++) {
+          setProgress(10 + (i / total) * 80, `${currentLang === 'en' ? 'Page' : 'Trang'} ${i}/${total}`);
+          const page = await pdf.getPage(i);
+          const scale = 1.8;
+          const vp = page.getViewport({ scale });
+          const unscaled = page.getViewport({ scale: 1 });
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(vp.width);
+          canvas.height = Math.round(vp.height);
+          const ctx = canvas.getContext('2d', { alpha: false });
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+          // Draw watermark
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          ctx.fillStyle = color;
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate((angleDeg * Math.PI) / 180);
+          const fontSize = Math.max(28, Math.min(canvas.width, canvas.height) * 0.07);
+          ctx.font = `bold ${fontSize}px Inter, Arial, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          // Tile a few times along diagonal for denser stamp look
+          const step = fontSize * 4.5;
+          for (let ty = -canvas.height; ty < canvas.height; ty += step) {
+            for (let tx = -canvas.width; tx < canvas.width; tx += step * 2.2) {
+              ctx.fillText(text, tx, ty);
+            }
+          }
+          ctx.restore();
+
+          const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
+          const buf = await blob.arrayBuffer();
+          pagesData.push({
+            jpegBytes: new Uint8Array(buf),
+            pixelWidth: canvas.width,
+            pixelHeight: canvas.height,
+            widthPt: unscaled.width,
+            heightPt: unscaled.height
+          });
+        }
+        setProgress(95, currentLang === 'en' ? 'Building PDF...' : 'Đang tạo PDF...');
+        const bytes = NativePurePdfGenerator.createFromPages(pagesData, 'fit');
+        const name = sanitizeForZipFilename(wmOutFilename.value.trim(), 'Tai_lieu_watermark') + '.pdf';
+        downloadBlob(new Blob([bytes], { type: 'application/pdf' }), name);
+        setProgress(100, 'OK');
+        setTimeout(() => { showProgress(false); wmExecuteBtn.disabled = false; showToast(currentLang === 'en' ? 'Watermark applied!' : 'Đã đóng dấu thành công!'); }, 300);
+      } catch (err) {
+        showProgress(false); wmExecuteBtn.disabled = false; showToast('Lỗi: ' + err.message, 'error');
+      }
+    });
+
+    /* =========================================================================
+       9. MODULE 6: SCAN CAMERA → PDF (Mobile · Adobe Scan inspired)
+       ========================================================================= */
+    const scanState = {
+      stream: null,
+      pages: [],
+      facingMode: 'environment',
+      torchOn: false,
+      filter: 'auto',
+      corners: [
+        { x: 0.10, y: 0.10 },
+        { x: 0.90, y: 0.10 },
+        { x: 0.90, y: 0.90 },
+        { x: 0.10, y: 0.90 }
+      ],
+      dragIndex: -1,
+      videoBox: { left: 0, top: 0, width: 1, height: 1 }
+    };
+    const scanVideo = document.getElementById('scan-video');
+    const scanCanvas = document.getElementById('scan-capture-canvas');
+    const scanPlaceholder = document.getElementById('scan-placeholder');
+    const scanOverlay = document.getElementById('scan-overlay');
+    const scanQuad = document.getElementById('scan-quad');
+    const scanPreviewWrap = document.getElementById('scan-preview-wrap');
+    const scanHandles = [
+      document.getElementById('scan-handle-tl'),
+      document.getElementById('scan-handle-tr'),
+      document.getElementById('scan-handle-br'),
+      document.getElementById('scan-handle-bl')
+    ];
+    const scanStartBtn = document.getElementById('scan-start-btn');
+    const scanStopBtn = document.getElementById('scan-stop-btn');
+    const scanSwitchBtn = document.getElementById('scan-switch-btn');
+    const scanFlashBtn = document.getElementById('scan-flash-btn');
+    const scanFlashIcon = document.getElementById('scan-flash-icon');
+    const scanFlashLabel = document.getElementById('scan-flash-label');
+    const scanImportBtn = document.getElementById('scan-import-btn');
+    const scanImportInput = document.getElementById('scan-import-input');
+    const scanCaptureBtn = document.getElementById('scan-capture-btn');
+    const scanResetCornersBtn = document.getElementById('scan-reset-corners-btn');
+    const scanAutoDetectBtn = document.getElementById('scan-auto-detect-btn');
+    const scanClearBtn = document.getElementById('scan-clear-btn');
+    const scanExportBtn = document.getElementById('scan-export-btn');
+    const scanPagesGrid = document.getElementById('scan-pages-grid');
+    const scanCount = document.getElementById('scan-count');
+    const scanLayout = document.getElementById('scan-layout');
+    const scanOutFilename = document.getElementById('scan-out-filename');
+
+    function resetScanCorners() {
+      scanState.corners = [
+        { x: 0.10, y: 0.10 },
+        { x: 0.90, y: 0.10 },
+        { x: 0.90, y: 0.90 },
+        { x: 0.10, y: 0.90 }
+      ];
+      updateScanOverlay();
+    }
+
+    function getScanVideoDisplayBox() {
+      const wrap = scanPreviewWrap.getBoundingClientRect();
+      const vw = scanVideo.videoWidth || 1;
+      const vh = scanVideo.videoHeight || 1;
+      const wr = wrap.width;
+      const hr = wrap.height;
+      const scale = Math.min(wr / vw, hr / vh);
+      const dw = vw * scale;
+      const dh = vh * scale;
+      const left = (wr - dw) / 2;
+      const top = (hr - dh) / 2;
+      return { left, top, width: dw, height: dh, scale, videoW: vw, videoH: vh, wrapW: wr, wrapH: hr };
+    }
+
+    function updateScanOverlay() {
+      if (!scanOverlay || scanOverlay.classList.contains('hidden')) return;
+      const box = getScanVideoDisplayBox();
+      scanState.videoBox = box;
+      const pts = scanState.corners.map(c => {
+        const px = box.left + c.x * box.width;
+        const py = box.top + c.y * box.height;
+        return [px, py];
+      });
+      if (scanQuad) scanQuad.setAttribute('points', pts.map(p => p.join(',')).join(' '));
+      scanHandles.forEach((h, i) => {
+        if (!h) return;
+        h.style.left = pts[i][0] + 'px';
+        h.style.top = pts[i][1] + 'px';
+      });
+    }
+
+    function stopScanCamera() {
+      if (scanState.stream) {
+        try {
+          scanState.stream.getTracks().forEach(t => {
+            try { t.applyConstraints({ advanced: [{ torch: false }] }); } catch (_) {}
+            t.stop();
+          });
+        } catch (_) {}
+        scanState.stream = null;
+      }
+      scanState.torchOn = false;
+      if (scanVideo) {
+        scanVideo.srcObject = null;
+        scanVideo.classList.add('hidden');
+      }
+      if (scanPlaceholder) scanPlaceholder.classList.remove('hidden');
+      if (scanOverlay) scanOverlay.classList.add('hidden');
+      if (scanStartBtn) scanStartBtn.classList.remove('hidden');
+      if (scanStopBtn) scanStopBtn.classList.add('hidden');
+      if (scanSwitchBtn) scanSwitchBtn.classList.add('hidden');
+      if (scanFlashBtn) scanFlashBtn.classList.add('hidden');
+      if (scanCaptureBtn) scanCaptureBtn.disabled = true;
+      if (scanResetCornersBtn) scanResetCornersBtn.disabled = true;
+      if (scanAutoDetectBtn) scanAutoDetectBtn.disabled = true;
+    }
+
+    async function startScanCamera() {
+      stopScanCamera();
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast(currentLang === 'en' ? 'Camera API not supported.' : 'Trình duyệt không hỗ trợ camera.', 'error');
+        return;
+      }
+      try {
+        const constraints = {
+          audio: false,
+          video: {
+            facingMode: { ideal: scanState.facingMode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        scanState.stream = stream;
+        scanVideo.srcObject = stream;
+        await scanVideo.play();
+        scanVideo.classList.remove('hidden');
+        scanPlaceholder.classList.add('hidden');
+        scanOverlay.classList.remove('hidden');
+        scanStartBtn.classList.add('hidden');
+        scanStopBtn.classList.remove('hidden');
+        scanSwitchBtn.classList.remove('hidden');
+        scanFlashBtn.classList.remove('hidden');
+        scanCaptureBtn.disabled = false;
+        scanResetCornersBtn.disabled = false;
+        scanAutoDetectBtn.disabled = false;
+        requestAnimationFrame(() => {
+          resetScanCorners();
+          updateScanOverlay();
+        });
+        showToast(currentLang === 'en'
+          ? 'Camera ready — drag corners or Auto-detect'
+          : 'Camera sẵn sàng — kéo góc hoặc Tự phát hiện');
+      } catch (err) {
+        console.error(err);
+        const msg = (err && err.name === 'NotAllowedError')
+          ? (currentLang === 'en' ? 'Camera permission denied.' : 'Bạn đã từ chối quyền camera.')
+          : ((currentLang === 'en' ? 'Cannot open camera: ' : 'Không mở được camera: ') + (err.message || err.name));
+        showToast(msg, 'error');
+      }
+    }
+
+    async function switchScanCamera() {
+      scanState.facingMode = scanState.facingMode === 'environment' ? 'user' : 'environment';
+      await startScanCamera();
+    }
+
+    async function toggleScanFlash() {
+      if (!scanState.stream) return;
+      const track = scanState.stream.getVideoTracks()[0];
+      if (!track) return;
+      try {
+        const caps = track.getCapabilities ? track.getCapabilities() : {};
+        if (!caps.torch) {
+          showToast(currentLang === 'en' ? 'Flash not supported on this camera' : 'Camera này không hỗ trợ flash', 'error');
+          return;
+        }
+        scanState.torchOn = !scanState.torchOn;
+        await track.applyConstraints({ advanced: [{ torch: scanState.torchOn }] });
+        if (scanFlashIcon) {
+          scanFlashIcon.className = scanState.torchOn ? 'fa-solid fa-bolt text-edu-yellow' : 'fa-solid fa-bolt';
+        }
+        if (scanFlashLabel) {
+          scanFlashLabel.textContent = scanState.torchOn
+            ? (currentLang === 'en' ? 'On' : 'Bật')
+            : (currentLang === 'en' ? 'Flash' : 'Flash');
+        }
+      } catch (err) {
+        showToast((currentLang === 'en' ? 'Flash error: ' : 'Lỗi flash: ') + (err.message || ''), 'error');
+      }
+    }
+
+    // Filter chip UI
+    document.querySelectorAll('.scan-filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.scan-filter-chip').forEach(c => {
+          c.classList.remove('border-edu-green', 'bg-edu-tint', 'text-edu-teal');
+          c.classList.add('border-slate-200', 'bg-white', 'text-edu-text');
+        });
+        chip.classList.remove('border-slate-200', 'bg-white', 'text-edu-text');
+        chip.classList.add('border-edu-green', 'bg-edu-tint', 'text-edu-teal');
+        const radio = chip.querySelector('input[type="radio"]');
+        if (radio) {
+          radio.checked = true;
+          scanState.filter = radio.value;
+        }
+      });
+    });
+
+    // ---- Corner drag ----
+    function onCornerPointerDown(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const idx = parseInt(e.currentTarget.getAttribute('data-corner'), 10);
+      if (isNaN(idx)) return;
+      scanState.dragIndex = idx;
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    }
+    function onCornerPointerMove(e) {
+      if (scanState.dragIndex < 0) return;
+      e.preventDefault();
+      const box = getScanVideoDisplayBox();
+      const rect = scanPreviewWrap.getBoundingClientRect();
+      let nx = (e.clientX - rect.left - box.left) / box.width;
+      let ny = (e.clientY - rect.top - box.top) / box.height;
+      nx = Math.max(0.02, Math.min(0.98, nx));
+      ny = Math.max(0.02, Math.min(0.98, ny));
+      scanState.corners[scanState.dragIndex] = { x: nx, y: ny };
+      updateScanOverlay();
+    }
+    function onCornerPointerUp(e) {
+      if (scanState.dragIndex < 0) return;
+      try { e.currentTarget.releasePointerCapture?.(e.pointerId); } catch (_) {}
+      scanState.dragIndex = -1;
+    }
+    scanHandles.forEach(h => {
+      if (!h) return;
+      h.addEventListener('pointerdown', onCornerPointerDown);
+      h.addEventListener('pointermove', onCornerPointerMove);
+      h.addEventListener('pointerup', onCornerPointerUp);
+      h.addEventListener('pointercancel', onCornerPointerUp);
+    });
+    window.addEventListener('resize', () => updateScanOverlay());
+    if (scanVideo) {
+      scanVideo.addEventListener('loadedmetadata', () => updateScanOverlay());
+      scanVideo.addEventListener('resize', () => updateScanOverlay());
+    }
+
+    // ---- Simple auto edge detection (bright document on darker background) ----
+    function autoDetectDocumentCorners() {
+      if (!scanVideo.videoWidth) {
+        showToast(currentLang === 'en' ? 'Camera not ready' : 'Camera chưa sẵn sàng', 'error');
+        return;
+      }
+      const vw = scanVideo.videoWidth;
+      const vh = scanVideo.videoHeight;
+      const sampleW = 160;
+      const sampleH = Math.round(sampleW * vh / vw);
+      const tmp = document.createElement('canvas');
+      tmp.width = sampleW; tmp.height = sampleH;
+      const tctx = tmp.getContext('2d', { willReadFrequently: true });
+      tctx.drawImage(scanVideo, 0, 0, sampleW, sampleH);
+      const img = tctx.getImageData(0, 0, sampleW, sampleH);
+      const data = img.data;
+
+      // Luminance + simple threshold relative to mean
+      let sum = 0;
+      const lum = new Float32Array(sampleW * sampleH);
+      for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+        const L = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        lum[p] = L;
+        sum += L;
+      }
+      const mean = sum / lum.length;
+      const thresh = mean + 18; // document usually brighter
+
+      // Find bounding box of bright pixels with some margin inward
+      let minX = sampleW, minY = sampleH, maxX = 0, maxY = 0, count = 0;
+      for (let y = 2; y < sampleH - 2; y++) {
+        for (let x = 2; x < sampleW - 2; x++) {
+          if (lum[y * sampleW + x] > thresh) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            count++;
+          }
+        }
+      }
+      if (count < sampleW * sampleH * 0.08 || maxX - minX < sampleW * 0.25 || maxY - minY < sampleH * 0.25) {
+        showToast(currentLang === 'en'
+          ? 'Could not detect document — adjust lighting / background'
+          : 'Không phát hiện được tờ giấy — thử nền tối, đủ sáng', 'error');
+        return;
+      }
+      // Slight inset so edges are inside paper
+      const padX = (maxX - minX) * 0.02;
+      const padY = (maxY - minY) * 0.02;
+      minX = Math.max(0, minX + padX);
+      maxX = Math.min(sampleW - 1, maxX - padX);
+      minY = Math.max(0, minY + padY);
+      maxY = Math.min(sampleH - 1, maxY - padY);
+
+      scanState.corners = [
+        { x: minX / sampleW, y: minY / sampleH },
+        { x: maxX / sampleW, y: minY / sampleH },
+        { x: maxX / sampleW, y: maxY / sampleH },
+        { x: minX / sampleW, y: maxY / sampleH }
+      ];
+      updateScanOverlay();
+      showToast(currentLang === 'en' ? 'Edges detected — adjust if needed' : 'Đã phát hiện cạnh — chỉnh lại nếu cần');
+    }
+
+    // ---- Perspective math (same as before) ----
+    function computeHomography(src, dst) {
+      const A = [];
+      const b = [];
+      for (let i = 0; i < 4; i++) {
+        const xs = src[i].x, ys = src[i].y;
+        const xd = dst[i].x, yd = dst[i].y;
+        A.push([xs, ys, 1, 0, 0, 0, -xs * xd, -ys * xd]);
+        b.push(xd);
+        A.push([0, 0, 0, xs, ys, 1, -xs * yd, -ys * yd]);
+        b.push(yd);
+      }
+      const n = 8;
+      const M = A.map((row, i) => row.concat([b[i]]));
+      for (let col = 0; col < n; col++) {
+        let pivot = col;
+        for (let r = col + 1; r < n; r++) {
+          if (Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
+        }
+        [M[col], M[pivot]] = [M[pivot], M[col]];
+        const div = M[col][col] || 1e-12;
+        for (let c = col; c <= n; c++) M[col][c] /= div;
+        for (let r = 0; r < n; r++) {
+          if (r === col) continue;
+          const f = M[r][col];
+          for (let c = col; c <= n; c++) M[r][c] -= f * M[col][c];
+        }
+      }
+      const h = M.map(row => row[n]);
+      h.push(1);
+      return h;
+    }
+
+    function applyHomography(H, x, y) {
+      const w = H[6] * x + H[7] * y + H[8];
+      return {
+        x: (H[0] * x + H[1] * y + H[2]) / w,
+        y: (H[3] * x + H[4] * y + H[5]) / w
+      };
+    }
+
+    function warpPerspective(srcCanvas, srcCorners, outW, outH) {
+      const dst = [
+        { x: 0, y: 0 },
+        { x: outW - 1, y: 0 },
+        { x: outW - 1, y: outH - 1 },
+        { x: 0, y: outH - 1 }
+      ];
+      const H = computeHomography(dst, srcCorners);
+      const sctx = srcCanvas.getContext('2d', { willReadFrequently: true });
+      const srcData = sctx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
+      const sw = srcCanvas.width, sh = srcCanvas.height;
+      const out = document.createElement('canvas');
+      out.width = outW;
+      out.height = outH;
+      const octx = out.getContext('2d');
+      const outImg = octx.createImageData(outW, outH);
+      const sd = srcData.data;
+      const od = outImg.data;
+
+      function sample(x, y) {
+        const x0 = Math.floor(x), y0 = Math.floor(y);
+        const x1 = x0 + 1, y1 = y0 + 1;
+        const fx = x - x0, fy = y - y0;
+        if (x0 < 0 || y0 < 0 || x1 >= sw || y1 >= sh) return [255, 255, 255];
+        const i00 = (y0 * sw + x0) * 4;
+        const i10 = (y0 * sw + x1) * 4;
+        const i01 = (y1 * sw + x0) * 4;
+        const i11 = (y1 * sw + x1) * 4;
+        const r = sd[i00] * (1 - fx) * (1 - fy) + sd[i10] * fx * (1 - fy) + sd[i01] * (1 - fx) * fy + sd[i11] * fx * fy;
+        const g = sd[i00 + 1] * (1 - fx) * (1 - fy) + sd[i10 + 1] * fx * (1 - fy) + sd[i01 + 1] * (1 - fx) * fy + sd[i11 + 1] * fx * fy;
+        const b = sd[i00 + 2] * (1 - fx) * (1 - fy) + sd[i10 + 2] * fx * (1 - fy) + sd[i01 + 2] * (1 - fx) * fy + sd[i11 + 2] * fx * fy;
+        return [r, g, b];
+      }
+
+      for (let y = 0; y < outH; y++) {
+        for (let x = 0; x < outW; x++) {
+          const p = applyHomography(H, x, y);
+          const [r, g, b] = sample(p.x, p.y);
+          const i = (y * outW + x) * 4;
+          od[i] = r; od[i + 1] = g; od[i + 2] = b; od[i + 3] = 255;
+        }
+      }
+      octx.putImageData(outImg, 0, 0);
+      return out;
+    }
+
+    /** Apply document-friendly filters (Adobe-like Auto / Gray / B&W / Enhance) */
+    function applyScanFilter(canvas, filter) {
+      if (!filter || filter === 'original') return canvas;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = img.data;
+      const w = canvas.width, h = canvas.height;
+
+      if (filter === 'gray' || filter === 'bw') {
+        for (let i = 0; i < d.length; i += 4) {
+          const L = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          d[i] = d[i + 1] = d[i + 2] = L;
+        }
+        if (filter === 'bw') {
+          // Adaptive-ish threshold around local mean via global Otsu-lite
+          let hist = new Array(256).fill(0);
+          for (let i = 0; i < d.length; i += 4) hist[d[i] | 0]++;
+          const total = w * h;
+          let sum = 0;
+          for (let t = 0; t < 256; t++) sum += t * hist[t];
+          let sumB = 0, wB = 0, maxVar = 0, thr = 128;
+          for (let t = 0; t < 256; t++) {
+            wB += hist[t];
+            if (!wB) continue;
+            const wF = total - wB;
+            if (!wF) break;
+            sumB += t * hist[t];
+            const mB = sumB / wB;
+            const mF = (sum - sumB) / wF;
+            const v = wB * wF * (mB - mF) * (mB - mF);
+            if (v > maxVar) { maxVar = v; thr = t; }
+          }
+          for (let i = 0; i < d.length; i += 4) {
+            const v = d[i] > thr ? 255 : 0;
+            d[i] = d[i + 1] = d[i + 2] = v;
+          }
+        }
+      } else if (filter === 'auto' || filter === 'enhance') {
+        // Contrast stretch + mild sharpen via unsharp-ish brightness curve
+        let minL = 255, maxL = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          const L = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          if (L < minL) minL = L;
+          if (L > maxL) maxL = L;
+        }
+        const range = Math.max(1, maxL - minL);
+        const contrast = filter === 'auto' ? 1.15 : 1.25;
+        const brightness = filter === 'auto' ? 8 : 14;
+        for (let i = 0; i < d.length; i += 4) {
+          for (let c = 0; c < 3; c++) {
+            let v = ((d[i + c] - minL) / range) * 255;
+            v = (v - 128) * contrast + 128 + brightness;
+            d[i + c] = Math.max(0, Math.min(255, v));
+          }
+        }
+        // Simple 3x3 sharpen kernel pass (on a copy of luminance boost)
+        if (filter === 'auto') {
+          const copy = new Uint8ClampedArray(d);
+          const kx = [0, -0.5, 0, -0.5, 3, -0.5, 0, -0.5, 0];
+          for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+              for (let c = 0; c < 3; c++) {
+                let s = 0, ki = 0;
+                for (let dy = -1; dy <= 1; dy++) {
+                  for (let dx = -1; dx <= 1; dx++) {
+                    s += copy[((y + dy) * w + (x + dx)) * 4 + c] * kx[ki++];
+                  }
+                }
+                d[(y * w + x) * 4 + c] = Math.max(0, Math.min(255, s));
+              }
+            }
+          }
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return canvas;
+    }
+
+    function updateScanStats() {
+      scanCount.textContent = scanState.pages.length;
+      scanClearBtn.disabled = scanState.pages.length === 0;
+      scanExportBtn.disabled = scanState.pages.length === 0;
+    }
+
+    function renderScanPages() {
+      scanPagesGrid.innerHTML = '';
+      scanState.pages.forEach((p, index) => {
+        const card = document.createElement('div');
+        card.className = 'relative group bg-slate-100 rounded-xl border-2 border-edu-green/30 overflow-hidden shadow-sm cursor-grab active:cursor-grabbing';
+        card.dataset.id = p.id;
+        card.innerHTML = `
+          <div class="aspect-[3/4] flex items-center justify-center p-1">
+            <img src="${p.dataUrl}" alt="Scan ${index + 1}" class="max-w-full max-h-full object-contain rounded pointer-events-none">
+          </div>
+          <div class="absolute top-1 left-1 bg-edu-teal text-white text-[10px] font-black px-1.5 py-0.5 rounded-md">${index + 1}</div>
+          <div class="absolute top-1 right-1 flex gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition">
+            <button type="button" class="scan-rot w-7 h-7 rounded-lg bg-white/95 text-edu-teal border border-edu-green/30 flex items-center justify-center" title="Xoay">
+              <i class="fa-solid fa-rotate-right text-[10px]"></i>
+            </button>
+            <button type="button" class="scan-del w-7 h-7 rounded-lg bg-white/95 text-edu-red border border-edu-red/30 flex items-center justify-center" title="Xóa">
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </div>
+        `;
+        card.querySelector('.scan-del').addEventListener('click', (e) => {
+          e.stopPropagation();
+          scanState.pages = scanState.pages.filter(x => x.id !== p.id);
+          renderScanPages();
+          updateScanStats();
+        });
+        card.querySelector('.scan-rot').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await rotateScanPage(p);
+          renderScanPages();
+        });
+        scanPagesGrid.appendChild(card);
+      });
+      if (window.Sortable && scanPagesGrid) {
+        if (scanPagesGrid._sortable) {
+          try { scanPagesGrid._sortable.destroy(); } catch (_) {}
+        }
+        scanPagesGrid._sortable = Sortable.create(scanPagesGrid, {
+          animation: 180,
+          ghostClass: 'sortable-ghost',
+          onEnd: (evt) => {
+            if (evt.oldIndex === evt.newIndex) return;
+            const moved = scanState.pages.splice(evt.oldIndex, 1)[0];
+            scanState.pages.splice(evt.newIndex, 0, moved);
+            renderScanPages();
+          }
+        });
+      }
+      updateScanStats();
+    }
+
+    async function rotateScanPage(p) {
+      const img = new Image();
+      await new Promise(res => { img.onload = res; img.src = p.dataUrl; });
+      const c = document.createElement('canvas');
+      c.width = img.naturalHeight;
+      c.height = img.naturalWidth;
+      const ctx = c.getContext('2d');
+      ctx.translate(c.width / 2, c.height / 2);
+      ctx.rotate(Math.PI / 2);
+      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      p.dataUrl = c.toDataURL('image/jpeg', 0.92);
+      const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.92));
+      const buf = await blob.arrayBuffer();
+      p.jpegBytes = new Uint8Array(buf);
+      p.width = c.width;
+      p.height = c.height;
+    }
+
+    async function captureScanPage() {
+      if (!scanState.stream || !scanVideo.videoWidth) {
+        showToast(currentLang === 'en' ? 'Camera not ready' : 'Camera chưa sẵn sàng', 'error');
+        return;
+      }
+      scanCaptureBtn.disabled = true;
+      updateScanOverlay();
+      const vw = scanVideo.videoWidth;
+      const vh = scanVideo.videoHeight;
+
+      scanCanvas.width = vw;
+      scanCanvas.height = vh;
+      const ctx = scanCanvas.getContext('2d', { alpha: false, willReadFrequently: true });
+      ctx.drawImage(scanVideo, 0, 0, vw, vh);
+
+      const srcCorners = scanState.corners.map(c => ({
+        x: c.x * vw,
+        y: c.y * vh
+      }));
+
+      const wTop = Math.hypot(srcCorners[1].x - srcCorners[0].x, srcCorners[1].y - srcCorners[0].y);
+      const wBot = Math.hypot(srcCorners[2].x - srcCorners[3].x, srcCorners[2].y - srcCorners[3].y);
+      const hLeft = Math.hypot(srcCorners[3].x - srcCorners[0].x, srcCorners[3].y - srcCorners[0].y);
+      const hRight = Math.hypot(srcCorners[2].x - srcCorners[1].x, srcCorners[2].y - srcCorners[1].y);
+      let outW = Math.round(Math.max(wTop, wBot));
+      let outH = Math.round(Math.max(hLeft, hRight));
+      const maxEdge = 2000;
+      if (Math.max(outW, outH) > maxEdge) {
+        const r = maxEdge / Math.max(outW, outH);
+        outW = Math.max(100, Math.round(outW * r));
+        outH = Math.max(100, Math.round(outH * r));
+      }
+
+      try {
+        let warped = warpPerspective(scanCanvas, srcCorners, outW, outH);
+        const filter = (document.querySelector('input[name="scan-filter"]:checked') || {}).value || scanState.filter || 'auto';
+        warped = applyScanFilter(warped, filter);
+        const dataUrl = warped.toDataURL('image/jpeg', 0.92);
+        const blob = await new Promise(res => warped.toBlob(res, 'image/jpeg', 0.92));
+        const buf = await blob.arrayBuffer();
+        scanState.pages.push({
+          id: 's_' + Math.random().toString(36).slice(2, 10),
+          dataUrl,
+          jpegBytes: new Uint8Array(buf),
+          width: outW,
+          height: outH
+        });
+        renderScanPages();
+        showToast(currentLang === 'en'
+          ? `Page ${scanState.pages.length} captured`
+          : `Đã chụp trang ${scanState.pages.length}`);
+      } catch (err) {
+        console.error(err);
+        showToast((currentLang === 'en' ? 'Capture failed: ' : 'Chụp lỗi: ') + err.message, 'error');
+      } finally {
+        scanCaptureBtn.disabled = false;
+      }
+    }
+
+    /** Import images from gallery (no camera needed) */
+    async function importScanImages(files) {
+      const list = Array.from(files || []).filter(f => f.type.startsWith('image/'));
+      if (!list.length) {
+        showToast(currentLang === 'en' ? 'Please choose image files' : 'Vui lòng chọn file ảnh', 'error');
+        return;
+      }
+      showProgress(true);
+      for (let i = 0; i < list.length; i++) {
+        setProgress(10 + (i / list.length) * 80, `${currentLang === 'en' ? 'Importing' : 'Đang thêm'} ${i + 1}/${list.length}...`);
+        try {
+          const url = URL.createObjectURL(list[i]);
+          const img = new Image();
+          await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+          // Fit max edge 2000, apply filter
+          let w = img.naturalWidth, h = img.naturalHeight;
+          const maxEdge = 2000;
+          if (Math.max(w, h) > maxEdge) {
+            const r = maxEdge / Math.max(w, h);
+            w = Math.round(w * r); h = Math.round(h * r);
+          }
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          const filter = (document.querySelector('input[name="scan-filter"]:checked') || {}).value || 'auto';
+          applyScanFilter(c, filter);
+          const dataUrl = c.toDataURL('image/jpeg', 0.92);
+          const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.92));
+          const buf = await blob.arrayBuffer();
+          scanState.pages.push({
+            id: 's_' + Math.random().toString(36).slice(2, 10),
+            dataUrl,
+            jpegBytes: new Uint8Array(buf),
+            width: w,
+            height: h
+          });
+        } catch (err) {
+          showToast((currentLang === 'en' ? 'Import error: ' : 'Lỗi thêm ảnh: ') + err.message, 'error');
+        }
+      }
+      setProgress(100, 'OK');
+      setTimeout(() => {
+        showProgress(false);
+        renderScanPages();
+        showToast(currentLang === 'en'
+          ? `Added ${list.length} image(s)`
+          : `Đã thêm ${list.length} ảnh`);
+      }, 200);
+    }
+
+    scanStartBtn?.addEventListener('click', () => startScanCamera());
+    scanStopBtn?.addEventListener('click', () => {
+      stopScanCamera();
+      showToast(currentLang === 'en' ? 'Camera stopped' : 'Đã tắt camera');
+    });
+    scanSwitchBtn?.addEventListener('click', () => switchScanCamera());
+    scanFlashBtn?.addEventListener('click', () => toggleScanFlash());
+    scanCaptureBtn?.addEventListener('click', () => captureScanPage());
+    scanResetCornersBtn?.addEventListener('click', () => {
+      resetScanCorners();
+      showToast(currentLang === 'en' ? 'Corners reset' : 'Đã đặt lại 4 góc');
+    });
+    scanAutoDetectBtn?.addEventListener('click', () => autoDetectDocumentCorners());
+    scanImportBtn?.addEventListener('click', () => scanImportInput?.click());
+    scanImportInput?.addEventListener('change', (e) => {
+      if (e.target.files?.length) importScanImages(e.target.files);
+      scanImportInput.value = '';
+    });
+    scanClearBtn?.addEventListener('click', () => {
+      scanState.pages = [];
+      renderScanPages();
+      showToast(currentLang === 'en' ? 'Cleared all pages' : 'Đã xóa hết trang');
+    });
+
+    scanExportBtn?.addEventListener('click', async () => {
+      if (!scanState.pages.length) return;
+      scanExportBtn.disabled = true;
+      showProgress(true);
+      setProgress(15, currentLang === 'en' ? 'Building PDF from scans...' : 'Đang tạo PDF từ ảnh scan...');
+      try {
+        const layout = scanLayout.value || 'portrait';
+        const pagesData = scanState.pages.map(p => ({
+          jpegBytes: p.jpegBytes,
+          pixelWidth: p.width,
+          pixelHeight: p.height,
+          widthPt: layout === 'landscape' ? 841.89 : 595.28,
+          heightPt: layout === 'landscape' ? 595.28 : 841.89
+        }));
+        setProgress(70, currentLang === 'en' ? 'Encoding PDF...' : 'Đang mã hóa PDF...');
+        const bytes = NativePurePdfGenerator.createFromPages(pagesData, layout);
+        const name = sanitizeForZipFilename(scanOutFilename.value.trim() || 'Scan_tai_lieu', 'Scan_tai_lieu') + '.pdf';
+        downloadBlob(new Blob([bytes], { type: 'application/pdf' }), name);
+        setProgress(100, 'OK');
+        setTimeout(() => {
+          showProgress(false);
+          scanExportBtn.disabled = false;
+          showToast(currentLang === 'en'
+            ? `PDF exported (${scanState.pages.length} pages)`
+            : `Đã xuất PDF (${scanState.pages.length} trang)`);
+        }, 300);
+      } catch (err) {
+        showProgress(false);
+        scanExportBtn.disabled = false;
+        showToast('Lỗi: ' + err.message, 'error');
+      }
+    });
+
+    window.addEventListener('beforeunload', () => stopScanCamera());
+
+
+  </script>
+</body>
+</html>

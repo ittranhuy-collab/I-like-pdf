@@ -1,0 +1,6 @@
+{
+  "name": "EduDoc Studio",
+  "description": "Bộ công cụ xử lý, ghép nối, nén, tách, watermark và scan tài liệu PDF chuyên nghiệp dành cho học tập và giảng dạy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
